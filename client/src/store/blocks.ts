@@ -24,6 +24,8 @@ export type BlockCid = {
 	// Unique id of the block
 	id: string;
 
+	isRoot: boolean;
+
 	// Next and previous block id
 	nextBlockId: string | null;
 	prevBlockId: string | null;
@@ -46,125 +48,173 @@ export type BlockType =
 	| "chart";
 
 // Record of all blocks in the document. based on the block id
-export const blocks = new Map<string, Block>();
-
-// Record of all blocks in the document. based on the block id, its going to be a linked list of blocks
-export const blockMatrix = atom<Record<string, BlockCid>>({});
+export const blocks = new Map<BlockCid["id"], BlockContent>();
 
 // The root block id of the document
-export const rootBlockId = atom<string | null>(null);
+export let rootBlockId: string | null = null;
+
+// Record of all blocks in the document. based on the block id, its going to be a linked list of blocks
+export const blockMatrixAtom = atom<Record<string, BlockCid>>({});
 
 // Add a new block to the document, after a specific blockId
-export const addBlockAfter = atom(
+export const addBlockAfterAtom = atom(
 	null,
 	(get, set, arg: { afterBlockId: string; content: BlockContent }) => {
 		const { afterBlockId, content } = arg;
 
-		const blockMatrixValue = get(blockMatrix);
-		const afterBlock = blocks.get(afterBlockId);
+		const blockMatrix = get(blockMatrixAtom);
+		const afterBlock = blockMatrix[afterBlockId];
 
-		const newBlock = createBlock(content);
+		const newBlockCid = createBlockCid();
 
-		if (afterBlock?.cid.nextBlockId) {
+		if (afterBlock?.nextBlockId) {
 			// Insert the new block between the afterBlock and the block after the afterBlock
-			newBlock.cid.nextBlockId = afterBlock.cid.nextBlockId;
-			afterBlock.cid.nextBlockId = newBlock.cid.id;
+			newBlockCid.nextBlockId = afterBlock.nextBlockId;
+			afterBlock.nextBlockId = newBlockCid.id;
 		}
 
-		set(blockMatrix, {
-			...blockMatrixValue,
-			[newBlock.cid.id]: newBlock.cid,
+		set(blockMatrixAtom, {
+			...blockMatrix,
+			[newBlockCid.id]: newBlockCid,
 		});
 
-		blocks.set(newBlock.cid.id, newBlock);
+		blocks.set(newBlockCid.id, content);
 	},
 );
 
 // Add a new block to the document, before a specific blockId
-export const addBlockBefore = atom(
+export const addBlockBeforeAtom = atom(
 	null,
 	(get, set, arg: { beforeBlockId: string; content: BlockContent }) => {
 		const { beforeBlockId, content } = arg;
 
-		const blockMatrixValue = get(blockMatrix);
-		const beforeBlock = blocks.get(beforeBlockId);
+		const blockMatrix = get(blockMatrixAtom);
+		const beforeBlock = blockMatrix[beforeBlockId];
 
-		const newBlock = createBlock(content);
+		const newBlockCid = createBlockCid();
 
-		if (beforeBlock?.cid.prevBlockId) {
+		if (beforeBlock?.prevBlockId) {
 			// Insert the new block between the beforeBlock and the block before the beforeBlock
-			newBlock.cid.prevBlockId = beforeBlock.cid.prevBlockId;
-			beforeBlock.cid.prevBlockId = newBlock.cid.id;
+			newBlockCid.prevBlockId = beforeBlock.prevBlockId;
+			beforeBlock.prevBlockId = newBlockCid.id;
 		}
 
-		set(blockMatrix, {
-			...blockMatrixValue,
-			[newBlock.cid.id]: newBlock.cid,
+		set(blockMatrixAtom, {
+			...blockMatrix,
+			[newBlockCid.id]: newBlockCid,
 		});
 
-		blocks.set(newBlock.cid.id, newBlock);
+		blocks.set(newBlockCid.id, content);
 	},
 );
 
 // Remove a block from the document, based on the blockId
-export const removeBlock = atom(null, (get, set, arg: { blockId: string }) => {
-	const { blockId } = arg;
+export const removeBlockAtom = atom(
+	null,
+	(get, set, arg: { blockId: string }) => {
+		const { blockId } = arg;
 
-	const blockMatrixValue = get(blockMatrix);
-	const block = blocks.get(blockId);
+		const blockMatrix = get(blockMatrixAtom);
+		const blockCid = blockMatrix[blockId];
 
-	if (block) {
-		if (block.cid.prevBlockId) {
-			// If the block has a previous block, set the next block of the previous block to the next block of the block
-			const prevBlock = blocks.get(block.cid.prevBlockId);
-			if (prevBlock) {
-				prevBlock.cid.nextBlockId = block.cid.nextBlockId;
+		if (blockCid) {
+			if (blockCid.prevBlockId) {
+				// If the block has a previous block, set the next block of the previous block to the next block of the block
+				const prevBlockCid = blockMatrix[blockCid.prevBlockId];
+				if (prevBlockCid) {
+					prevBlockCid.nextBlockId = blockCid.nextBlockId;
+				}
 			}
+
+			if (blockCid.nextBlockId) {
+				// If the block has a next block, set the previous block of the next block to the previous block of the block
+				const nextBlockCid = blockMatrix[blockCid.nextBlockId];
+				if (nextBlockCid) {
+					nextBlockCid.prevBlockId = blockCid.prevBlockId;
+				}
+			}
+
+			delete blockMatrix[blockId];
+			blocks.delete(blockId);
 		}
 
-		if (block.cid.nextBlockId) {
-			// If the block has a next block, set the previous block of the next block to the previous block of the block
-			const nextBlock = blocks.get(block.cid.nextBlockId);
-			if (nextBlock) {
-				nextBlock.cid.prevBlockId = block.cid.prevBlockId;
-			}
-		}
-
-		delete blockMatrixValue[blockId];
-		blocks.delete(blockId);
-	}
-
-	set(blockMatrix, {
-		...blockMatrixValue,
-	});
-});
+		set(blockMatrixAtom, {
+			...blockMatrix,
+		});
+	},
+);
 
 // Add a Block to the Root of the Document, if a root Block Exists it will become the next block of the new block
-export const addRootBlock = atom(
+export const addBlockAtRootAtom = atom(
 	null,
 	(get, set, arg: { content: BlockContent }) => {
 		const { content } = arg;
 
-		const blockMatrixValue = get(blockMatrix);
-		const rootBlockIdValue = get(rootBlockId);
+		const blockMatrix = get(blockMatrixAtom);
 
-		const newBlock = createBlock(content);
+		const newBlockCid = createBlockCid();
 
-		if (rootBlockIdValue) {
-			const rootBlock = blocks.get(rootBlockIdValue);
-			if (rootBlock) {
-				newBlock.cid.nextBlockId = rootBlockIdValue;
-				rootBlock.cid.prevBlockId = newBlock.cid.id;
+		if (rootBlockId) {
+			const rootBlockCid = blockMatrix[rootBlockId];
+			if (rootBlockCid) {
+				newBlockCid.nextBlockId = rootBlockCid.id;
+				rootBlockCid.prevBlockId = newBlockCid.id;
 			}
 		}
 
-		set(rootBlockId, newBlock.cid.id);
-		set(blockMatrix, {
-			...blockMatrixValue,
-			[newBlock.cid.id]: newBlock.cid,
+		set(blockMatrixAtom, {
+			...blockMatrix,
+			[newBlockCid.id]: newBlockCid,
 		});
 
-		blocks.set(newBlock.cid.id, newBlock);
+		blocks.set(newBlockCid.id, content);
+		rootBlockId = newBlockCid.id;
+	},
+);
+
+// Add a Block to the End of the Document, if the root does not exist the new block will become the root
+export const addBlockAtEndAtom = atom(
+	null,
+	(get, set, arg: { content: BlockContent }) => {
+		const { content } = arg;
+
+		const blockMatrix = get(blockMatrixAtom);
+
+		const newBlockCid = createBlockCid();
+
+		let currentBlockId = rootBlockId;
+
+		while (currentBlockId) {
+			const blockCid = blockMatrix[currentBlockId];
+
+			if (!blockCid) break;
+
+			const block = getBlock(blockCid.id);
+
+			if (!block) break;
+
+			if (!blockCid.nextBlockId) {
+				blockCid.nextBlockId = newBlockCid.id;
+				newBlockCid.prevBlockId = blockCid.id;
+				break;
+			}
+
+			currentBlockId = blockCid.nextBlockId;
+		}
+
+		if (!rootBlockId) {
+			rootBlockId = newBlockCid.id;
+			newBlockCid.isRoot = true;
+		}
+
+		const prevBlockCid = newBlockCid.prevBlockId;
+
+		set(blockMatrixAtom, {
+			...blockMatrix,
+			[newBlockCid.id]: newBlockCid,
+		});
+
+		blocks.set(newBlockCid.id, content);
 	},
 );
 
@@ -179,23 +229,9 @@ export const createBlockCid = (): BlockCid => {
 		id: uuidv4(),
 		nextBlockId: null,
 		prevBlockId: null,
-
+		isRoot: false,
 		parentBlockId: null,
 		parentBlockIndex: null,
-	};
-};
-
-/**
- * @description
- * Create a new block with a unique id and the content
- * @param cid The block cid is the unique id of the block
- * @param content The content of the block
- * @returns  A new block
- */
-export const createBlock = (content: BlockContent, cid?: BlockCid) => {
-	return {
-		cid: cid ?? createBlockCid(),
-		content,
 	};
 };
 
@@ -207,4 +243,23 @@ export const createBlock = (content: BlockContent, cid?: BlockCid) => {
  */
 export const getBlock = (blockId: string) => {
 	return blocks.get(blockId);
+};
+
+// Find the last block id in the document
+export const getLastBlockId = (
+	blockMatrix: Record<string, BlockCid>,
+): string | null => {
+	if (!rootBlockId) return null;
+
+	let currentId = rootBlockId;
+	let lastId = rootBlockId;
+
+	while (currentId) {
+		lastId = currentId;
+		const block = blockMatrix[currentId];
+		if (!block || !block.nextBlockId) break;
+		currentId = block.nextBlockId;
+	}
+
+	return lastId;
 };

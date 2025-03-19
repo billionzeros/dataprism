@@ -3,7 +3,7 @@ import React from "react";
 
 const Tools = () => {
 	return (
-		<div className="grid h-fit mt-10 sticky top-10 left-5 select-none">
+		<div className="lg:grid hidden h-fit mt-10 sticky top-10 left-5 select-none">
 			<div className="bg-custom-gray-primary rounded-md w-fit p-2 flex flex-col gap-2">
 				<div className="flex items-center flex-col gap-1 cursor-pointer hover:bg-custom-gray-secondary p-2 rounded-md">
 					<CirclePlus className="text-white" size={24} />

@@ -1,33 +1,118 @@
-import type React from "react";
+import React, { useState } from "react";
 import BlockRenderer from "../blocks/BlockRenderer";
 import Title from "./Title";
-import { useAtomValue } from "jotai";
-import { rootBlockId, getBlock } from "@/store/blocks";
+import { useAtomValue, useSetAtom } from "jotai";
+import {
+	getBlock,
+	addBlockAtEndAtom,
+	blockMatrixAtom,
+	rootBlockId,
+	getLastBlockId,
+	type BlockContent,
+} from "@/store/blocks";
 
 const Document = () => {
-	const rootBlock = useAtomValue(rootBlockId);
+	const blockMatrix = useAtomValue(blockMatrixAtom);
+	const addBlockAtEnd = useSetAtom(addBlockAtEndAtom);
 
 	const renderBlocks = (): Array<React.ReactNode> => {
 		const components: Array<React.ReactNode> = [];
-		let currentBlockId = rootBlock;
+		let currentBlockId = rootBlockId;
 
 		while (currentBlockId) {
-			const block = getBlock(currentBlockId);
+			const blockCid = blockMatrix[currentBlockId];
 
-			if (!block) break;
+			if (!blockCid) break;
 
-			components.push(<BlockRenderer key={block.cid.id} block={block} />);
+			const blockContent = getBlock(blockCid.id);
 
-			currentBlockId = block.cid.nextBlockId;
+			if (!blockContent) break;
+
+			const nextBlockId = blockCid.nextBlockId;
+
+			let focus = false;
+
+			if (
+				nextBlockId === null &&
+				blockContent.type === "paragraph" &&
+				blockContent.text?.length === 0
+			) {
+				focus = true;
+			}
+
+			components.push(
+				<React.Fragment key={`block-fragment-${blockCid.id}`}>
+					<BlockRenderer
+						key={blockCid.id}
+						blockCid={blockCid}
+						blockContent={blockContent}
+						focus={focus}
+					/>
+				</React.Fragment>,
+			);
+
+			currentBlockId = nextBlockId;
 		}
 
 		return components;
 	};
 
+	const handleOnClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+		const target = e.target as HTMLElement;
+
+		if (
+			target.getAttribute("contenteditable") === "true" ||
+			target.closest('[contenteditable="true"]') ||
+			target.closest(".block-renderer")
+		) {
+			return;
+		}
+
+		e.preventDefault();
+
+		const lastBlockId = getLastBlockId(blockMatrix);
+		if (lastBlockId) {
+			const lastBlock = getBlock(lastBlockId);
+
+			if (
+				lastBlock &&
+				lastBlock.type === "paragraph" &&
+				lastBlock.text?.length === 0
+			) {
+				return;
+			}
+		}
+
+		const content: BlockContent = {
+			type: "paragraph",
+			size: "small",
+			text: "",
+		};
+
+		addBlockAtEnd({
+			content,
+		});
+	};
+
+	console.info("BlockMatrix", blockMatrix);
+
 	return (
 		<div className="mt-10">
 			<Title />
-			<div className="cursor-text min-h-screen">{renderBlocks()}</div>
+			<div
+				onClick={handleOnClick}
+				onKeyDown={(e) => {
+					if (
+						e.key === "Enter" &&
+						!(e.target as HTMLElement).isContentEditable
+					) {
+						handleOnClick(e);
+					}
+				}}
+				className="cursor-text min-h-screen"
+			>
+				{renderBlocks()}
+			</div>
 		</div>
 	);
 };

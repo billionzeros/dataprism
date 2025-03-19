@@ -4,7 +4,7 @@ import Document from "./Document";
 
 const Prism = () => {
 	return (
-		<div className="grid grid-cols-[1fr_10fr_1fr]">
+		<div className="grid lg:grid-cols-[1fr_10fr_1fr] px-4 sm:px-10">
 			<Tools />
 			<Document />
 			<div />

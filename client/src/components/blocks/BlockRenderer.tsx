@@ -1,41 +1,46 @@
 import { cn } from "@/lib/utils";
-import type { Block } from "@/store/blocks";
+import type { Block, BlockCid, BlockContent } from "@/store/blocks";
 import type React from "react";
 import Header from "./Header";
 import Paragraph from "./Paragraph";
 
 interface Props {
 	className?: string;
-	block: Block;
+	blockCid: BlockCid;
+	blockContent: BlockContent;
+	focus?: boolean;
 }
 
-const BlockRenderer: React.FC<Props> = ({ block, className }) => {
+const BlockRenderer: React.FC<Props> = ({
+	blockContent,
+	blockCid,
+	className,
+	focus,
+}) => {
 	const renderBlock = () => {
-		switch (block.content.type) {
+		switch (blockContent.type) {
 			case "header":
 				return (
 					<Header
-						key={block.cid.id}
-						content={block.content.text ?? ""}
-						size={block.content.size ?? "small"}
+						key={`header-${blockCid.id}`}
+						content={blockContent.text ?? ""}
+						size={blockContent.size ?? "small"}
 					/>
 				);
 
 			case "paragraph":
 				return (
 					<Paragraph
-						key={block.cid.id}
-						content={block.content.text ?? ""}
-						size={block.content.size ?? "small"}
+						key={`paragraph-${blockCid.id}`}
+						content={blockContent.text ?? ""}
+						size={blockContent.size ?? "small"}
+						focus={focus}
 					/>
 				);
 		}
 	};
 	return (
-		<div
-			key="block-renderer"
-			className={cn("cursor-text min-h-screen", className)}
-		>
+		<div key="block-renderer" className={cn("block-renderer", className)}>
 			{renderBlock()}
 		</div>
 	);

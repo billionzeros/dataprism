@@ -18,8 +18,9 @@ const Header: React.FC<Props> = ({ content = "", size = "small" }) => {
 		<BaseBlock>
 			<div
 				contentEditable
+				suppressContentEditableWarning
 				className={cn(
-					"text-custom-text-primary w-fit border-none outline-none",
+					"text-custom-text-primary w-full border-none outline-none",
 					variants[size],
 				)}
 			>

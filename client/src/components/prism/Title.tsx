@@ -7,7 +7,8 @@ const Title = () => {
 			<div className="flex-1 text-4xl font-bold">
 				<h1
 					contentEditable
-					className="text-4xl w-fit border-none outline-none font-bold text-white"
+					suppressContentEditableWarning
+					className="text-4xl w-full border-none outline-none font-bold text-white"
 				>
 					Energy Price Metrics
 				</h1>
@@ -25,4 +26,4 @@ const Title = () => {
 	);
 };
 
-export default Title;
+export default React.memo(Title);
