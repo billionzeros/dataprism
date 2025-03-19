@@ -1,14 +1,20 @@
-import { GeistSans } from "geist/font/sans";
-import { type AppType } from "next/app";
+import type { AppType } from "next/app";
+import { Inter } from "next/font/google";
 
 import "@/styles/globals.css";
 
+const inter = Inter({
+	style: ["normal"],
+	preload: true,
+	variable: "--font-inter",
+});
+
 const MyApp: AppType = ({ Component, pageProps }) => {
-  return (
-    <div className={GeistSans.className}>
-      <Component {...pageProps} />
-    </div>
-  );
+	return (
+		<div className={`${inter.variable} font-inter`}>
+			<Component {...pageProps} />
+		</div>
+	);
 };
 
 export default MyApp;
