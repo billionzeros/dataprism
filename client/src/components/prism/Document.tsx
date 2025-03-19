@@ -1,9 +1,15 @@
 import React from "react";
+import BlockRenderer from "../blocks/BlockRenderer";
+import Header from "../blocks/Header";
+import Title from "./Title";
 
 const Document = () => {
 	return (
-		<div className="text-custom-text-primary mt-10">
-			<h1 className="font-bold text-3xl">Energy Price Metrics</h1>
+		<div className="mt-10">
+			<Title />
+			<BlockRenderer>
+				<Header content="Energy Price Metrics" size="large" />
+			</BlockRenderer>
 		</div>
 	);
 };
