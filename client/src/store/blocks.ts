@@ -198,3 +198,13 @@ export const createBlock = (content: BlockContent, cid?: BlockCid) => {
 		content,
 	};
 };
+
+/**
+ * @description Get a block based on the block id
+ * @param blockId The unique id of the block
+ * @returns
+ * The block with the block id
+ */
+export const getBlock = (blockId: string) => {
+	return blocks.get(blockId);
+};
