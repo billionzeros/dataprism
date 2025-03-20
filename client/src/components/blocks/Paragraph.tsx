@@ -69,8 +69,6 @@ const Paragraph: React.FC<Props> = ({ cid, content, onKeyDown }) => {
 			console.log("Space pressed", textContent);
 		}
 
-		console.info("Key Pressed", e.key, e.code);
-
 		// Handle enter key press
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();

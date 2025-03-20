@@ -208,7 +208,6 @@ export const removeBlockAtom = atom(
 
 		if (blockCid) {
 			if (blockCid.prevBlockId) {
-				// If the block has a previous block, set the next block of the previous block to the next block of the block
 				const prevBlockCid = blockMatrix[blockCid.prevBlockId];
 				if (prevBlockCid) {
 					prevBlockCid.nextBlockId = blockCid.nextBlockId;
@@ -216,7 +215,6 @@ export const removeBlockAtom = atom(
 			}
 
 			if (blockCid.nextBlockId) {
-				// If the block has a next block, set the previous block of the next block to the previous block of the block
 				const nextBlockCid = blockMatrix[blockCid.nextBlockId];
 				if (nextBlockCid) {
 					nextBlockCid.prevBlockId = blockCid.prevBlockId;
