@@ -7,12 +7,17 @@ interface Props {
 
 const BaseBlock: React.FC<Props> = ({ children }) => {
 	return (
-		<div className="flex relative items-center gap-1 group -translate-x-6">
-			<span className="flex items-center opacity-0 group-hover:opacity-100 cursor-pointer duration-100 transition-all">
-				<GripVertical size={18} className="text-custom-gray-secondary" />
-			</span>
+		<div className="relative w-full group -translate-x-6">
+			{/* Position the grip absolutely so it doesn't affect layout */}
+			<div className="absolute left-0 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100">
+				<GripVertical
+					size={18}
+					className="text-custom-gray-secondary cursor-grab"
+				/>
+			</div>
 
-			<div>{children}</div>
+			{/* Add left padding for the grip icon space */}
+			<div className="w-full pl-6">{children}</div>
 		</div>
 	);
 };

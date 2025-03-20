@@ -8,16 +8,96 @@ import { v4 as uuidv4 } from "uuid";
  */
 export type Block = {
 	cid: BlockCid;
-	content: BlockContent;
+	content: AnyBlockContent;
 };
 
-// The content of the block
-export type BlockContent = {
-	type: BlockType;
-
-	text?: string;
-	size?: "small" | "medium" | "large";
+// The content of the header
+export type HeaderContent = {
+	// The text content of the header
+	text: string;
+	size: "small" | "medium" | "large";
 };
+
+// The content of the paragraph
+export type ParagraphContent = {
+	text: string;
+	size: "small" | "medium" | "large";
+};
+
+// The type of the block
+export type BlockType =
+	| "header"
+	| "paragraph"
+	| "code"
+	| "image"
+	| "list"
+	| "quote"
+	| "divider"
+	| "chart";
+
+// Specific content interfaces for each block type
+export interface CodeContent {
+	code: string;
+	language: string;
+}
+
+export interface ImageContent {
+	src: string;
+	alt: string;
+}
+
+export interface ListContent {
+	items: string[];
+}
+
+export interface QuoteContent {
+	text: string;
+}
+
+export interface DividerContent {
+	blocks: Block[];
+}
+
+export interface ChartContent {
+	data: unknown; // Using unknown instead of any for better type safety
+}
+
+// Type-level mapping from block types to their content types
+type ContentTypeMapping = {
+	header: HeaderContent;
+	paragraph: ParagraphContent;
+	code: CodeContent;
+	image: ImageContent;
+	list: ListContent;
+	quote: QuoteContent;
+	divider: DividerContent;
+	chart: ChartContent;
+};
+
+// Map of block types to their respective content types (with enforcement)
+export type BlockContentMap = {
+	[K in BlockType]: ContentTypeMapping[K];
+};
+
+// Get content type based on block type using the map
+export type BlockContentTypes<T extends BlockType> = BlockContentMap[T];
+
+// The content of the block with known type
+export type BlockContent<T extends BlockType> = {
+	type: T;
+	content: BlockContentTypes<T>;
+};
+
+// Union type for all possible block contents
+export type AnyBlockContent =
+	| BlockContent<"header">
+	| BlockContent<"paragraph">
+	| BlockContent<"code">
+	| BlockContent<"image">
+	| BlockContent<"list">
+	| BlockContent<"quote">
+	| BlockContent<"divider">
+	| BlockContent<"chart">;
 
 // Information about the block
 export type BlockCid = {
@@ -35,20 +115,8 @@ export type BlockCid = {
 	parentBlockIndex: number | null; // The index of the block in the parent block
 };
 
-// The type of the block
-export type BlockType =
-	| "header"
-	| "paragraph"
-	| "code"
-	| "image"
-	| "list"
-	| "quote"
-	| "divider"
-	| "column"
-	| "chart";
-
 // Record of all blocks in the document. based on the block id
-export const blocks = new Map<BlockCid["id"], BlockContent>();
+export const blocks = new Map<BlockCid["id"], AnyBlockContent>();
 
 // The root block id of the document
 export let rootBlockId: string | null = null;
@@ -59,7 +127,7 @@ export const blockMatrixAtom = atom<Record<string, BlockCid>>({});
 // Add a new block to the document, after a specific blockId
 export const addBlockAfterAtom = atom(
 	null,
-	(get, set, arg: { afterBlockId: string; content: BlockContent }) => {
+	(get, set, arg: { afterBlockId: string; content: AnyBlockContent }) => {
 		const { afterBlockId, content } = arg;
 
 		const blockMatrix = get(blockMatrixAtom);
@@ -85,7 +153,7 @@ export const addBlockAfterAtom = atom(
 // Add a new block to the document, before a specific blockId
 export const addBlockBeforeAtom = atom(
 	null,
-	(get, set, arg: { beforeBlockId: string; content: BlockContent }) => {
+	(get, set, arg: { beforeBlockId: string; content: AnyBlockContent }) => {
 		const { beforeBlockId, content } = arg;
 
 		const blockMatrix = get(blockMatrixAtom);
@@ -147,7 +215,7 @@ export const removeBlockAtom = atom(
 // Add a Block to the Root of the Document, if a root Block Exists it will become the next block of the new block
 export const addBlockAtRootAtom = atom(
 	null,
-	(get, set, arg: { content: BlockContent }) => {
+	(get, set, arg: { content: AnyBlockContent }) => {
 		const { content } = arg;
 
 		const blockMatrix = get(blockMatrixAtom);
@@ -175,7 +243,7 @@ export const addBlockAtRootAtom = atom(
 // Add a Block to the End of the Document, if the root does not exist the new block will become the root
 export const addBlockAtEndAtom = atom(
 	null,
-	(get, set, arg: { content: BlockContent }) => {
+	(get, set, arg: { content: AnyBlockContent }) => {
 		const { content } = arg;
 
 		const blockMatrix = get(blockMatrixAtom);

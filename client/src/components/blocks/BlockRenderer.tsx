@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
-import type { Block, BlockCid, BlockContent } from "@/store/blocks";
+import type {
+	AnyBlockContent,
+	Block,
+	BlockCid,
+	BlockContent,
+} from "@/store/blocks";
 import type React from "react";
 import Header from "./Header";
 import Paragraph from "./Paragraph";
@@ -7,34 +12,31 @@ import Paragraph from "./Paragraph";
 interface Props {
 	className?: string;
 	blockCid: BlockCid;
-	blockContent: BlockContent;
-	focus?: boolean;
+	blockContent: AnyBlockContent;
 }
 
 const BlockRenderer: React.FC<Props> = ({
 	blockContent,
 	blockCid,
 	className,
-	focus,
 }) => {
 	const renderBlock = () => {
 		switch (blockContent.type) {
 			case "header":
 				return (
 					<Header
-						key={`header-${blockCid.id}`}
-						content={blockContent.text ?? ""}
-						size={blockContent.size ?? "small"}
+						key={`renderer-${blockCid.id}`}
+						cid={blockCid}
+						content={blockContent.content}
 					/>
 				);
 
 			case "paragraph":
 				return (
 					<Paragraph
-						key={`paragraph-${blockCid.id}`}
-						content={blockContent.text ?? ""}
-						size={blockContent.size ?? "small"}
-						focus={focus}
+						key={`renderer-${blockCid.id}`}
+						content={blockContent.content}
+						cid={blockCid}
 					/>
 				);
 		}

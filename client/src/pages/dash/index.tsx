@@ -5,7 +5,7 @@ import Prism from "@/components/prism/Prism";
 
 const DashPage = () => {
 	return (
-		<main className="bg-custom-background min-h-screen">
+		<main className="bg-custom-background min-h-screen max-w-full">
 			<Header />
 			<Prism />
 		</main>

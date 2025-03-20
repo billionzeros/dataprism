@@ -2,76 +2,74 @@ import { cn } from "@/lib/utils";
 import type React from "react";
 import BaseBlock from "./BaseBlock";
 import { useEffect, useRef, useState } from "react";
+import type { BlockContent, BlockCid } from "@/store/blocks";
 
 interface Props {
-	content: string;
-	size: "small" | "medium" | "large";
-	focus?: boolean;
+	cid: BlockCid;
+	content: BlockContent<"paragraph">["content"];
 }
 
-const Paragraph: React.FC<Props> = ({ content, size, focus }) => {
+const Paragraph: React.FC<Props> = ({ cid, content }) => {
 	const editableRef = useRef<HTMLDivElement>(null);
-	const [showPlaceholder, setShowPlaceholder] = useState(content.length === 0);
+	const [isEmpty, setIsEmpty] = useState(content.text.length === 0);
 
-	const placeHolderContent = `Write, Press "Space" for AI, Type ' / " for commands`;
+	const placeHolderContent = `Write, Press "Space" for AI, Type ' / ' for commands`;
 
-	const variants: Record<Props["size"], string> = {
+	const variants: Record<Props["content"]["size"], string> = {
 		small: "text-base",
 		medium: "text-lg",
 		large: "text-xl",
 	};
 
 	useEffect(() => {
-		if (focus && editableRef.current) {
+		const shouldFocus = cid.nextBlockId === null && isEmpty;
+
+		if (shouldFocus && editableRef.current) {
 			editableRef.current.focus();
-
-			const selection = window.getSelection();
-			const range = document.createRange();
-
-			if (editableRef.current.firstChild) {
-				range.setStart(editableRef.current.firstChild, 0);
-			} else {
-				range.setStart(editableRef.current, 0);
-			}
-
-			range.collapse(true);
-			selection?.removeAllRanges();
-			selection?.addRange(range);
 		}
-	}, [focus]);
+	}, [cid.nextBlockId, isEmpty]);
 
-	const handleOnChange = (e: React.ChangeEvent<HTMLDivElement>) => {
-		if (e.target.textContent) {
-			setShowPlaceholder(false);
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+		if (e.key === " " || e.code === "Space") {
+			console.log("Space pressed");
 		}
+	};
 
-		if (!e.target.textContent) {
-			setShowPlaceholder(true);
-		}
-
-		console.log(e.target.textContent);
+	const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+		const currentContent = editableRef.current?.textContent || "";
+		setIsEmpty(currentContent.length === 0);
 	};
 
 	const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-		console.log("Push update to the Database", e.target.textContent);
+		console.log("Push update to the Database");
 	};
 
 	return (
 		<BaseBlock>
-			<div
-				ref={editableRef}
-				contentEditable
-				suppressContentEditableWarning
-				onChange={handleOnChange}
-				onInput={handleOnChange}
-				onBlur={handleBlur}
-				className={cn(
-					"text-custom-text-primary w-full border-none outline-none",
-					variants[size],
-					showPlaceholder ? "text-custom-gray-primary" : "",
+			<div className="relative w-full">
+				<div
+					ref={editableRef}
+					contentEditable="plaintext-only"
+					suppressContentEditableWarning
+					onInput={handleInput}
+					onKeyDown={handleKeyDown}
+					onBlur={handleBlur}
+					className={cn(
+						"text-custom-text-primary w-full border-none outline-none overflow-wrap-break-word break-words whitespace-pre-wrap overflow-x-hidden min-h-[1.5em]",
+						variants[content.size],
+					)}
+				/>
+
+				{isEmpty && (
+					<div
+						className={cn(
+							"absolute top-0 left-0 pointer-events-none text-custom-gray-primary",
+							variants[content.size],
+						)}
+					>
+						{placeHolderContent}
+					</div>
 				)}
-			>
-				{!showPlaceholder ? content : placeHolderContent}
 			</div>
 		</BaseBlock>
 	);

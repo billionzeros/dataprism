@@ -30,23 +30,12 @@ const Document = () => {
 
 			const nextBlockId = blockCid.nextBlockId;
 
-			let focus = false;
-
-			if (
-				nextBlockId === null &&
-				blockContent.type === "paragraph" &&
-				blockContent.text?.length === 0
-			) {
-				focus = true;
-			}
-
 			components.push(
 				<React.Fragment key={`block-fragment-${blockCid.id}`}>
 					<BlockRenderer
 						key={blockCid.id}
 						blockCid={blockCid}
 						blockContent={blockContent}
-						focus={focus}
 					/>
 				</React.Fragment>,
 			);
@@ -77,16 +66,19 @@ const Document = () => {
 			if (
 				lastBlock &&
 				lastBlock.type === "paragraph" &&
-				lastBlock.text?.length === 0
+				lastBlock.content.text?.length === 0
 			) {
 				return;
 			}
 		}
 
-		const content: BlockContent = {
+		const content: BlockContent<"paragraph"> = {
 			type: "paragraph",
-			size: "small",
-			text: "",
+
+			content: {
+				size: "medium",
+				text: "",
+			},
 		};
 
 		addBlockAtEnd({
