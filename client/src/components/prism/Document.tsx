@@ -43,6 +43,8 @@ const Document = () => {
 			currentBlockId = nextBlockId;
 		}
 
+		console.info("Components", components);
+
 		return components;
 	};
 

@@ -1,13 +1,16 @@
 import { cn } from "@/lib/utils";
-import type {
-	AnyBlockContent,
-	Block,
-	BlockCid,
-	BlockContent,
+import {
+	addBlockAfterAtom,
+	type AnyBlockContent,
+	type Block,
+	type BlockCid,
+	type BlockContent,
 } from "@/store/blocks";
 import type React from "react";
 import Header from "./Header";
 import Paragraph from "./Paragraph";
+import { useCallback, useRef } from "react";
+import { useSetAtom } from "jotai";
 
 interface Props {
 	className?: string;

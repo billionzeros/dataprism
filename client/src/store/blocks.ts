@@ -133,13 +133,20 @@ export const addBlockAfterAtom = atom(
 		const blockMatrix = get(blockMatrixAtom);
 		const afterBlock = blockMatrix[afterBlockId];
 
+		if (!afterBlock) return;
+
 		const newBlockCid = createBlockCid();
 
 		if (afterBlock?.nextBlockId) {
-			// Insert the new block between the afterBlock and the block after the afterBlock
-			newBlockCid.nextBlockId = afterBlock.nextBlockId;
-			afterBlock.nextBlockId = newBlockCid.id;
+			const nextBlockCid = blockMatrix[afterBlock.nextBlockId];
+			if (nextBlockCid) {
+				nextBlockCid.prevBlockId = newBlockCid.id;
+				newBlockCid.nextBlockId = nextBlockCid.id;
+			}
 		}
+
+		afterBlock.nextBlockId = newBlockCid.id;
+		newBlockCid.prevBlockId = afterBlockId;
 
 		set(blockMatrixAtom, {
 			...blockMatrix,
@@ -159,12 +166,26 @@ export const addBlockBeforeAtom = atom(
 		const blockMatrix = get(blockMatrixAtom);
 		const beforeBlock = blockMatrix[beforeBlockId];
 
+		if (!beforeBlock) return;
+
 		const newBlockCid = createBlockCid();
 
 		if (beforeBlock?.prevBlockId) {
-			// Insert the new block between the beforeBlock and the block before the beforeBlock
-			newBlockCid.prevBlockId = beforeBlock.prevBlockId;
-			beforeBlock.prevBlockId = newBlockCid.id;
+			const prevBlockCid = blockMatrix[beforeBlock.prevBlockId];
+
+			if (prevBlockCid) {
+				prevBlockCid.nextBlockId = newBlockCid.id;
+				newBlockCid.prevBlockId = prevBlockCid.id;
+			}
+		}
+
+		beforeBlock.prevBlockId = newBlockCid.id;
+		newBlockCid.nextBlockId = beforeBlockId;
+
+		if (beforeBlock.isRoot) {
+			newBlockCid.isRoot = true;
+			beforeBlock.isRoot = false;
+			rootBlockId = newBlockCid.id;
 		}
 
 		set(blockMatrixAtom, {
@@ -199,7 +220,17 @@ export const removeBlockAtom = atom(
 				const nextBlockCid = blockMatrix[blockCid.nextBlockId];
 				if (nextBlockCid) {
 					nextBlockCid.prevBlockId = blockCid.prevBlockId;
+
+					if (blockCid.isRoot) {
+						nextBlockCid.isRoot = true;
+						blockCid.isRoot = false;
+						rootBlockId = nextBlockCid.id;
+					}
 				}
+			}
+
+			if (blockCid.isRoot) {
+				rootBlockId = blockCid.nextBlockId;
 			}
 
 			delete blockMatrix[blockId];
