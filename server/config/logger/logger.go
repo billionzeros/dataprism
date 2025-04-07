@@ -114,7 +114,7 @@ func buildAxiomCore(opts LoggerOpts) (*zapcore.Core, error) {
 }
 
 // New creates a new logger
-func New(ctx context.Context, opts LoggerOpts) *zap.Logger {
+func New(ctx context.Context, opts LoggerOpts) (*zap.Logger, context.Context) {
 	isDevelopment := env.IsDevelopment()
 
 	baseLogger, err := buildZapLogger(opts)
@@ -124,7 +124,7 @@ func New(ctx context.Context, opts LoggerOpts) *zap.Logger {
 	}
 
 	if isDevelopment {
-		return baseLogger
+		return baseLogger, WithCtx(ctx, baseLogger)
 	}
 
 	if opts.AxiomConfig == nil {
@@ -173,7 +173,7 @@ func New(ctx context.Context, opts LoggerOpts) *zap.Logger {
 
 	zap.ReplaceGlobals(logger)
 
-	return logger
+	return logger, WithCtx(ctx, logger)
 
 }
 

@@ -11,7 +11,6 @@ import (
 type BlockType string
 
 const (
-	// Block types
 	HeadingBlock BlockType = "heading"
 	ParagraphBlock    BlockType = "paragraph"
 	ListBlock    BlockType = "list"
@@ -23,10 +22,8 @@ const (
 	LineChartBlock BlockType = "line-chart"
 	BarChartBlock BlockType = "bar-chart"
 	PieChartBlock BlockType = "pie-chart"
-	ScatterChartBlock BlockType = "scatter-chart"
 )
 
-// This is used to store the content of a block in a JSONB column
 type Block struct {
 	ID string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 
