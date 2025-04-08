@@ -4,10 +4,9 @@ import React from "react";
 const Tabs = () => {
 	return (
 		<div className="flex items-center">
-			{/* Active tab */}
-			<div className="flex items-center gap-2 px-4 py-2 border-x select-none border-custom-gray-secondary relative cursor-pointer">
+			<div className="flex items-center gap-2 px-4 py-2 border-r-[0.5px] select-none border-custom-gray-primary relative cursor-pointer">
 				<ChartArea className="text-custom-text-primary" size={18} />
-				<span className="text-custom-text-primary text-sm font-normal">
+				<span className="text-custom-text-primary text-xs font-normal">
 					Energy Price Metrics
 				</span>
 				<X

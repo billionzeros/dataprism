@@ -1,28 +1,63 @@
-import { CirclePlus, DatabaseZap, GitFork, MessagesSquare } from "lucide-react";
-import React from "react";
+import { cn } from "@/lib/utils";
+import { Plus, DatabaseZap, GitFork, MessagesSquare } from "lucide-react";
+import type React from "react";
 
-const Tools = () => {
+interface Props {
+	className?: string;
+}
+
+const Tools: React.FC<Props> = ({ className }) => {
 	return (
-		<div className="lg:grid hidden h-fit mt-10 sticky top-10 left-5 select-none">
-			<div className="bg-custom-gray-primary rounded-md w-fit p-2 flex flex-col gap-2">
-				<div className="flex items-center flex-col gap-1 cursor-pointer hover:bg-custom-gray-secondary p-2 rounded-md">
-					<CirclePlus className="text-white" size={24} />
-					<span className="text-xs text-custom-text-primary">Add</span>
+		<div className={cn("h-screen top-0 sticky", className)}>
+			<div className="border-r-[1px] h-full flex flex-col items-center pt-4 px-3 gap-5 w-fit border-custom-gray-primary">
+				<div className="group relative cursor-pointer ">
+					<div className="bg-red-500 rounded-full hover:scale-110 duration-150 transition-all shadow-md p-1 w-fit">
+						<Plus className="text-white" size={18} strokeWidth={1.5} />
+					</div>
+					<div className="absolute left-8 top-1/2 -translate-y-1/2 invisible group-hover:visible">
+						<span className="text-custom-text-primary font-mono bg-black shadow-md p-2 rounded-lg text-xs font-normal whitespace-nowrap">
+							Create New
+						</span>
+					</div>
 				</div>
 
-				<div className="flex items-center flex-col gap-1 cursor-pointer hover:bg-custom-gray-secondary p-2 rounded-md">
-					<GitFork className="text-white" size={24} />
-					<span className="text-xs text-custom-text-primary">Fork</span>
+				<div className="group relative cursor-pointer hover:scale-110 duration-150 transition-all shadow-md">
+					<GitFork
+						className="text-custom-gray-secondary"
+						size={20}
+						strokeWidth={1.0}
+					/>
+					<div className="absolute left-8 top-1/2 -translate-y-1/2 invisible group-hover:visible">
+						<span className="text-custom-text-primary font-mono bg-black shadow-md p-2 rounded-lg text-xs font-normal whitespace-nowrap">
+							Fork
+						</span>
+					</div>
 				</div>
 
-				<div className="flex items-center flex-col gap-1 cursor-pointer hover:bg-custom-gray-secondary p-2 rounded-md">
-					<DatabaseZap className="text-white" size={24} />
-					<span className="text-xs text-custom-text-primary">Source</span>
+				<div className="group relative cursor-pointer hover:scale-110 duration-150 transition-all shadow-md">
+					<DatabaseZap
+						className="text-custom-gray-secondary"
+						size={20}
+						strokeWidth={1.0}
+					/>
+					<div className="absolute left-8 top-1/2 -translate-y-1/2 invisible group-hover:visible">
+						<span className="text-custom-text-primary font-mono bg-black shadow-md p-2 rounded-lg text-xs font-normal whitespace-nowrap">
+							Database
+						</span>
+					</div>
 				</div>
 
-				<div className="flex items-center flex-col gap-1 cursor-pointer hover:bg-custom-gray-secondary p-2 rounded-md">
-					<MessagesSquare className="text-white" size={24} />
-					<span className="text-xs text-custom-text-primary">Chats</span>
+				<div className="group relative cursor-pointer hover:scale-110 duration-150 transition-all shadow-md">
+					<MessagesSquare
+						className="text-custom-gray-secondary"
+						size={20}
+						strokeWidth={1.0}
+					/>
+					<div className="absolute left-8 top-1/2 -translate-y-1/2 invisible group-hover:visible">
+						<span className="text-custom-text-primary font-mono bg-black shadow-md p-2 rounded-lg text-xs font-normal whitespace-nowrap">
+							AI Chats
+						</span>
+					</div>
 				</div>
 			</div>
 		</div>
