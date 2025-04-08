@@ -39,6 +39,7 @@ func NewApiServer(ctx context.Context) *ApiServer {
 
 	// Registering routers
 	routers.AddPageRouter(ctx, &baseRouter) // Page Router handles document-related endpoints
+	routers.AddHealthRouter(ctx, &baseRouter) // Health Router handles health check endpoints
 
 	apiServer.app.Use(apiServer.notFoundHandler)
 
