@@ -1,5 +1,6 @@
 import type { AppType } from "next/app";
 import { Inter } from "next/font/google";
+import { api } from "../utils/trpc";
 
 import "@/styles/globals.css";
 
@@ -17,4 +18,4 @@ const MyApp: AppType = ({ Component, pageProps }) => {
 	);
 };
 
-export default MyApp;
+export default api.withTRPC(MyApp);

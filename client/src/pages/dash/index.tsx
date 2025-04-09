@@ -1,4 +1,3 @@
-import Document from "@/components/prism/Document";
 import Header from "@/components/header/Header";
 import React from "react";
 import Prism from "@/components/prism/Prism";
