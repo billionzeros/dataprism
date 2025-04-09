@@ -11,6 +11,7 @@ import (
 	"github.com/OmGuptaIND/shooting-star/api"
 	"github.com/OmGuptaIND/shooting-star/config/env"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
+	"github.com/OmGuptaIND/shooting-star/db"
 	"go.uber.org/zap"
 )
 
@@ -37,9 +38,23 @@ func main() {
 	})
 	defer l.Sync()
 
+	// Establish a connection to the database
+	conn, err := db.NewDBConnection(ctx)
+	if err != nil {
+		l.Error("Failed to connect to database", zap.Error(err))
+		panic(err)
+	}
+
+	if err := conn.Health(); err != nil {
+		l.Error("Database health check failed", zap.Error(err))
+		panic(err)
+	}
+
 	// Create and start the API server
 	server := api.NewApiServer(ctx)
 	
+
+	// Setup Context cancellation and signal handling
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	

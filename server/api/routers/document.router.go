@@ -25,14 +25,16 @@ type DocumentRouter struct {
 // NewDocumentRouter creates a new DocumentRouter instance with the provided fiber.Router.
 func RegisterDocumentRoutes(ctx context.Context, baseRouter fiber.Router) {
 	handler := &DocumentRouter{
-		ctx: context.WithoutCancel(ctx),
+		ctx: ctx,
+		documentService: documents.NewDocumentService(ctx),
 		logger: logger.FromCtx(ctx),
 	}
 
+	// Grouping the routes under `/documents`
 	documentGroup := baseRouter.Group("/documents")
 
-	documentGroup.Post("/create", handler.createDocument)
-	documentGroup.Get("/:id", handler.getDocumentById)
+	documentGroup.Post("/create", handler.createDocument) // Create a new document
+	documentGroup.Get("/:id", handler.getDocumentById) // Get a document by ID
 }
 
 // createDocument handles the creation of a new document.
@@ -53,7 +55,7 @@ func (d *DocumentRouter) createDocument(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, err.Error())
 	}
 
-	d.logger.Info("document created", zap.String("title", req.Title))
+	d.logger.Info("New Document created", zap.String("title", req.Title))
 
 	return responses.Created(c, doc)
 }

@@ -1,26 +1,29 @@
 package documents
 
 import (
+	"context"
+
+	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/OmGuptaIND/shooting-star/db"
 	"github.com/OmGuptaIND/shooting-star/db/models"
 	"go.uber.org/zap"
 )
 
 type service struct {
+	ctx context.Context
 	logger *zap.Logger
 }
 
 // NewDocumentService creates a new instance of DocumentService with the provided logger.
-func NewDocumentService(logger *zap.Logger) DocumentService {
+func NewDocumentService(ctx context.Context) DocumentService {
 	return &service{
-		logger: logger,
+		ctx: ctx,
+		logger: logger.FromCtx(ctx),
 	}
 }
 
 // CreateDocument creates a new document in the database.
 func (s *service) CreateDocument(document *models.Document) (*models.Document, error) {
-	s.logger.Info("Creating document", zap.String("title", document.Title))
-
 	result := db.Conn.Create(document)
 	if result.Error != nil {
 		return document, result.Error

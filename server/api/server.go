@@ -8,6 +8,8 @@ import (
 	"github.com/OmGuptaIND/shooting-star/api/routers"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
 	"github.com/gofiber/fiber/v3/middleware/idempotency"
 	"github.com/gofiber/fiber/v3/middleware/limiter"
@@ -35,6 +37,9 @@ func NewApiServer(ctx context.Context) *ApiServer {
 	// Middleware to recover from panics
 	app.Use(recoverer.New())
 
+	// Middleware to handle CORS
+	app.Use(cors.New())
+
 	// Middleware to set security headers
 	app.Use(helmet.New())
 
@@ -48,6 +53,9 @@ func NewApiServer(ctx context.Context) *ApiServer {
 		LimiterMiddleware: limiter.SlidingWindow{},
 	}))
 
+	// Middleware to handle Liveness and Readiness check for the API server
+	app.Get(healthcheck.DefaultLivenessEndpoint, healthcheck.NewHealthChecker())
+
 	apiServer := &ApiServer{
 		ctx: ctx,
 		app: app,
@@ -60,6 +68,7 @@ func NewApiServer(ctx context.Context) *ApiServer {
 	// Registering routers
 	routers.RegisterDocumentRoutes(ctx, apiV1) // Page Router handles document-related endpoints
 
+	// Middleware to handle not found routes, this should be the last middleware in the chain.
 	app.Use(apiServer.notFoundHandler)
 
 	go apiServer.handleContextClose()

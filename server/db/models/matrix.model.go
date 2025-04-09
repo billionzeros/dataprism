@@ -101,3 +101,8 @@ func (bs *BlockMatrix) AfterDelete(tx *gorm.DB) error {
 	
 	return nil
 }
+
+func (BlockMatrix) TableName() string {
+    return "block_matrix"
+}
+

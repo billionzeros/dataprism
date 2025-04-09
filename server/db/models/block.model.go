@@ -51,3 +51,7 @@ func (bc *BlockContentJSON) Scan(value interface{}) error {
 
 	return json.Unmarshal(bytes, &bc)
 }
+
+func (Block) TableName() string {
+    return "blocks"
+}

@@ -21,3 +21,7 @@ type Document struct {
 	Blocks []Block `gorm:"-" json:"blocks,omitempty"`
 	BlockMatrix   []BlockMatrix `gorm:"-" json:"blockMatrix,omitempty"`
 }
+
+func (Document) TableName() string {
+    return "documents"
+}
