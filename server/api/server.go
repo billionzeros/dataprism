@@ -3,10 +3,15 @@ package api
 import (
 	"context"
 	"net"
+	"time"
 
 	"github.com/OmGuptaIND/shooting-star/api/routers"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/helmet"
+	"github.com/gofiber/fiber/v3/middleware/idempotency"
+	"github.com/gofiber/fiber/v3/middleware/limiter"
+	recoverer "github.com/gofiber/fiber/v3/middleware/recover"
 	"go.uber.org/zap"
 )
 
@@ -15,8 +20,7 @@ type ApiServer struct {
 	ctx context.Context
 	app *fiber.App
 
-
-	*zap.Logger
+	logger *zap.Logger
 }
 
 // NewApiServer creates a new ApiServer instance with the provided context and logger.
@@ -28,20 +32,35 @@ func NewApiServer(ctx context.Context) *ApiServer {
 		ReadTimeout: 0,
 	})
 
+	// Middleware to recover from panics
+	app.Use(recoverer.New())
+
+	// Middleware to set security headers
+	app.Use(helmet.New())
+
+	// This middleware is used to prevent duplicate requests from being processed.
+	app.Use(idempotency.New())
+
+	// Middleware to limit the number of requests from a single IP address
+	app.Use(limiter.New(limiter.Config{
+		Max:            20,
+		Expiration:     30 * time.Second,
+		LimiterMiddleware: limiter.SlidingWindow{},
+	}))
+
 	apiServer := &ApiServer{
 		ctx: ctx,
 		app: app,
-		Logger: logger.FromCtx(ctx),
+		logger: logger.FromCtx(ctx),
 	}
 
 	// BaseRouter for API versioning
-	baseRouter := app.Group("/api/v1")
+	apiV1 := app.Group("/api/v1")
 
 	// Registering routers
-	routers.AddDocumentRouter(ctx, &baseRouter) // Page Router handles document-related endpoints
-	routers.AddHealthRouter(ctx, &baseRouter) // Health Router handles health check endpoints
+	routers.RegisterDocumentRoutes(ctx, apiV1) // Page Router handles document-related endpoints
 
-	apiServer.app.Use(apiServer.notFoundHandler)
+	app.Use(apiServer.notFoundHandler)
 
 	go apiServer.handleContextClose()
 
@@ -56,20 +75,20 @@ func (a *ApiServer) Listen(addr string) error {
 		EnablePrefork: 	false, // Allows Running multiple instances for the API Server.
 		DisableStartupMessage: true,
 		OnShutdownError: func(err error) {
-			a.Logger.Error("Error shutting down the server: %v\n", zap.String("error", err.Error()))
+			a.logger.Error("Error shutting down the server: %v\n", zap.String("error", err.Error()))
 		},
 		OnShutdownSuccess: func() {
-			a.Logger.Info("API Server shutdown successfully")
+			a.logger.Info("API Server shutdown successfully")
 		},
 		ListenerAddrFunc: func(net.Addr) {
-			a.Logger.Info("ApiServer listening: ", zap.String("Addr", addr))
+			a.logger.Info("ApiServer listening: ", zap.String("Addr", addr))
 		},
 	})
 }
 
 // `notFoundHandler` handles unmatched routes.
 func (a *ApiServer) notFoundHandler(c fiber.Ctx) error {
-	a.Sugar().Info("Not Found: %s", c)
+	a.logger.Sugar().Info("Not Found: %s", c)
 
 	return fiber.NewError(fiber.StatusNotFound, "Resource not found")
 }
@@ -79,7 +98,7 @@ func (a *ApiServer) handleContextClose() {
 	<-a.ctx.Done()
 
 	if err := a.app.Shutdown(); err != nil {
-		a.Logger.Error("Error shutting down the server: %v\n", zap.String("error", err.Error()))
+		a.logger.Error("Error shutting down the server: %v\n", zap.String("error", err.Error()))
 	}
 }
 

@@ -39,6 +39,7 @@ func (e *appError) Code() int {
 const (
 	// BadRequest indicates the request was malformed or invalid
 	BadRequest = 400
+
 	// Unauthorized indicates authentication is required
 	Unauthorized = 401
 	// Forbidden indicates the request was valid but the server refuses action
