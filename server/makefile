@@ -1,9 +1,12 @@
 run:
-	@echo "Running $(APP_NAME) with arguments $(filter-out $@,$(MAKECMDGOALS))..."
+	@echo "Running $(APP_NAME)..."
 	@go run cmd/*.go $(filter-out $@,$(MAKECMDGOALS))
 
 build:
 	@go build -v -o ./bin/main cmd/*.go
+
+dev:
+	@air
 
 start:
 	@echo "Starting $(APP_NAME)..."

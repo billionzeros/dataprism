@@ -39,7 +39,7 @@ func DefaultConfig() Config {
 }
 
 // NewDBConnection creates a new database connection
-func NewDBConnection(ctx context.Context) (DB, error) {
+func NewDBConnection(ctx context.Context) (*DBConnection, error) {
 	dbCtx := context.WithoutCancel(ctx)
 
 	logger := logger.FromCtx(dbCtx)
