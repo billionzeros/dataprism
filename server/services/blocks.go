@@ -1,4 +1,4 @@
-package blocks
+package services
 
 import (
 	"github.com/OmGuptaIND/shooting-star/db"
@@ -7,20 +7,37 @@ import (
 )
 
 
-type service struct {
+type blockService struct {
 	logger *zap.Logger
+}
+
+type BlockService interface {
+	// CreateBlock creates a new block in the database.
+	CreateBlock(block *models.Block) (*models.Block, error)
+
+	// UpdateBlock updates an existing block in the database.
+	UpdateBlock(block *models.Block) (*models.Block, error)
+
+	// DeleteBlock deletes a block from the database.
+	DeleteBlock(id string) error
+
+	// GetBlockByID retrieves a block by its ID from the database.
+	GetBlockByID(id string) (*models.Block, error)
+
+	// GetBlockByDocumentID retrieves a block by its document ID from the database.
+	GetBlockByDocumentID(documentId string) ([]*models.Block, error)
 }
 
 
 // BlockService defines the interface for block-related operations.
 func NewBlockService(logger *zap.Logger) BlockService {
-	return &service{
+	return &blockService{
 		logger: logger,
 	}
 }
 
 // CreateBlock creates a new block in the database.
-func (s *service) CreateBlock(block *models.Block) (*models.Block, error) {
+func (s *blockService) CreateBlock(block *models.Block) (*models.Block, error) {
 	s.logger.Info("Creating block", zap.String("title", string(block.Type)))
 
 	result := db.Conn.Create(block)
@@ -32,7 +49,7 @@ func (s *service) CreateBlock(block *models.Block) (*models.Block, error) {
 }
 
 // UpdateBlock updates an existing block in the database.
-func (s *service) UpdateBlock(block *models.Block) (*models.Block, error) {
+func (s *blockService) UpdateBlock(block *models.Block) (*models.Block, error) {
 	s.logger.Info("Updating block", zap.String("title", string(block.Type)))
 
 	result := db.Conn.Save(block)
@@ -44,7 +61,7 @@ func (s *service) UpdateBlock(block *models.Block) (*models.Block, error) {
 }
 
 // DeleteBlock deletes a block from the database.
-func (s *service) DeleteBlock(id string) error {
+func (s *blockService) DeleteBlock(id string) error {
 	s.logger.Info("Deleting block", zap.String("id", id))
 
 	result := db.Conn.Where("id = ?", id).UpdateColumn("deleted_at", nil)
@@ -56,7 +73,7 @@ func (s *service) DeleteBlock(id string) error {
 }
 
 // GetBlockByID retrieves a block by its ID from the database.
-func (s *service) GetBlockByID(id string) (*models.Block, error) {
+func (s *blockService) GetBlockByID(id string) (*models.Block, error) {
 	s.logger.Info("Retrieving block by ID", zap.String("id", id))
 
 	block := &models.Block{}
@@ -69,7 +86,7 @@ func (s *service) GetBlockByID(id string) (*models.Block, error) {
 }
 
 // GetBlockByDocumentID retrieves a block by its document ID from the database.
-func (s *service) GetBlockByDocumentID(documentId string) ([]*models.Block, error) {
+func (s *blockService) GetBlockByDocumentID(documentId string) ([]*models.Block, error) {
 	s.logger.Info("Retrieving block by document ID", zap.String("documentId", documentId))
 
 	var blocks []*models.Block

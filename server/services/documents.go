@@ -1,4 +1,4 @@
-package documents
+package services
 
 import (
 	"context"
@@ -9,21 +9,38 @@ import (
 	"go.uber.org/zap"
 )
 
-type service struct {
+type documentService struct {
 	ctx context.Context
 	logger *zap.Logger
 }
 
+type DocumentService interface {
+	// CreateDocument creates a new document in the database.
+	CreateDocument(document *models.Document) (*models.Document, error)
+
+	// GetDocumentByID retrieves a document by its ID from the database.
+	GetDocumentByID(id string) (*models.Document, error)
+
+	// DeleteDocument deletes a document from the database.
+	DeleteDocument(id string) error
+
+	// GetDocumentByTitle retrieves a document by its title from the database.
+	GetDocumentByTitle(title string) (*models.Document, error)
+
+	// GetAllDocuments retrieves all documents from the database.
+	GetAllDocuments() ([]*models.Document, error)
+}
+
 // NewDocumentService creates a new instance of DocumentService with the provided logger.
 func NewDocumentService(ctx context.Context) DocumentService {
-	return &service{
+	return &documentService{
 		ctx: ctx,
 		logger: logger.FromCtx(ctx),
 	}
 }
 
 // CreateDocument creates a new document in the database.
-func (s *service) CreateDocument(document *models.Document) (*models.Document, error) {
+func (s *documentService) CreateDocument(document *models.Document) (*models.Document, error) {
 	result := db.Conn.Create(document)
 	if result.Error != nil {
 		return document, result.Error
@@ -33,7 +50,7 @@ func (s *service) CreateDocument(document *models.Document) (*models.Document, e
 }
 
 // GetDocumentByID retrieves a document by its ID from the database.
-func (s *service) GetDocumentByID(id string) (*models.Document, error) {
+func (s *documentService) GetDocumentByID(id string) (*models.Document, error) {
 	s.logger.Info("Retrieving document by ID", zap.String("id", id))
 
 	document := &models.Document{}
@@ -46,7 +63,7 @@ func (s *service) GetDocumentByID(id string) (*models.Document, error) {
 }
 
 // DeleteDocument deletes a document from the database.
-func (s *service) DeleteDocument(id string) error {
+func (s *documentService) DeleteDocument(id string) error {
 	s.logger.Info("Deleting document", zap.String("id", id))
 
 	document := &models.Document{}
@@ -59,7 +76,7 @@ func (s *service) DeleteDocument(id string) error {
 }
 
 // GetDocumentByTitle retrieves a document by its title from the database.
-func (s *service) GetDocumentByTitle(title string) (*models.Document, error) {
+func (s *documentService) GetDocumentByTitle(title string) (*models.Document, error) {
 	s.logger.Info("Retrieving document by title", zap.String("title", title))
 
 	document := &models.Document{}
@@ -72,7 +89,7 @@ func (s *service) GetDocumentByTitle(title string) (*models.Document, error) {
 }
 
 // GetAllDocuments retrieves all documents from the database.
-func (s *service) GetAllDocuments() ([]*models.Document, error) {
+func (s *documentService) GetAllDocuments() ([]*models.Document, error) {
 	s.logger.Info("Retrieving all documents")
 
 	documents := []*models.Document{}

@@ -1,4 +1,6 @@
-package documents
+package schema
+
+import "github.com/OmGuptaIND/shooting-star/db/models"
 
 // ---- CreateDocument ---
 type CreateDocumentRequest struct {
@@ -7,6 +9,8 @@ type CreateDocumentRequest struct {
 
 type CreateDocumentResponse struct {
 	DocumentID string `json:"document_id"`
+
+	*models.Document
 }
 
 // ----------------------

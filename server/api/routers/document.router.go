@@ -5,10 +5,11 @@ import (
 	"errors"
 
 	"github.com/OmGuptaIND/shooting-star/api/responses"
+	"github.com/OmGuptaIND/shooting-star/api/schema"
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/OmGuptaIND/shooting-star/db/models"
-	"github.com/OmGuptaIND/shooting-star/services/documents"
+	"github.com/OmGuptaIND/shooting-star/services"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ import (
 // DocumentRouter handles the routing for document-related endpoints.
 type DocumentRouter struct {
 	ctx context.Context
-	documentService documents.DocumentService
+	documentService services.DocumentService
 
 	logger *zap.Logger
 }
@@ -26,7 +27,7 @@ type DocumentRouter struct {
 func RegisterDocumentRoutes(ctx context.Context, baseRouter fiber.Router) {
 	handler := &DocumentRouter{
 		ctx: ctx,
-		documentService: documents.NewDocumentService(ctx),
+		documentService: services.NewDocumentService(ctx),
 		logger: logger.FromCtx(ctx),
 	}
 
@@ -39,7 +40,7 @@ func RegisterDocumentRoutes(ctx context.Context, baseRouter fiber.Router) {
 
 // createDocument handles the creation of a new document.
 func (d *DocumentRouter) createDocument(c fiber.Ctx) error {
-	req := new(documents.CreateDocumentRequest)
+	req := new(schema.CreateDocumentRequest)
 
 	if err := c.Bind().Body(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -57,12 +58,17 @@ func (d *DocumentRouter) createDocument(c fiber.Ctx) error {
 
 	d.logger.Info("New Document created", zap.String("title", req.Title))
 
-	return responses.Created(c, doc)
+	response := &schema.CreateDocumentResponse{
+		DocumentID: doc.ID,
+		Document: doc,
+	}
+
+	return responses.Created(c, response)
 }
 
 // getDocumentById handles the retrieval of a document by its ID.
 func (d *DocumentRouter) getDocumentById(c fiber.Ctx) error {
-	req := new(documents.GetDocumentByIDRequest)
+	req := new(schema.GetDocumentByIDRequest)
 
 	if err := c.Bind().Body(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -80,5 +86,10 @@ func (d *DocumentRouter) getDocumentById(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, err.Error())
 	}
 
-	return responses.OK(c, doc)
+	response := &schema.GetDocumentByIDResponse{
+		DocumentID: doc.ID,
+		Title: doc.Title,
+	}
+
+	return responses.OK(c, response)
 }
