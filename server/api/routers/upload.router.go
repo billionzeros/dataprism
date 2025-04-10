@@ -7,6 +7,7 @@ import (
 	"github.com/OmGuptaIND/shooting-star/api/schema"
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
+	"github.com/OmGuptaIND/shooting-star/pipeline/handlers"
 	"github.com/OmGuptaIND/shooting-star/services"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
@@ -42,20 +43,22 @@ func (d *UploadRouter) uploadCsv(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
 	}
 
-	// Check if the file is provided in the request
-	_, err := c.FormFile("file")
+	filePath := "/Users/omg/Desktop/01/shooting-star/server/data/mock_file_2.csv"
+
+	csvHandler := handlers.NewCSVHandler(d.ctx)
+	defer csvHandler.Close()
+
+	csvDetails, err := csvHandler.ExtractCSVDetails(filePath)
 	if err != nil {
-		d.logger.Error("Error getting file from request", zap.Error(err))
-		return responses.BadRequest(c, appError.InternalError, "File not found in the request")
+		d.logger.Error("Error extracting CSV details", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Failed to extract CSV details")
 	}
 
-	// // Process the uploaded CSV file
-	// if err := processCsv(file); err != nil {
-	// 	d.logger.Error("Error processing CSV file", zap.Error(err))
-	// 	return responses.BadRequest(c, appError.InternalError, "Failed to process CSV file")
-	// }
-
-	// d.logger.Info("CSV file processed successfully")
+	err = csvHandler.ProcessAndEmbedCSV(csvDetails)
+	if err != nil {
+		d.logger.Error("Error processing CSV file", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Failed to process CSV file")
+	}
 
 	return responses.OK(c, "CSV file processed successfully")
 }

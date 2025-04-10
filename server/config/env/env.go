@@ -10,6 +10,10 @@ type Env struct {
 	// Run Time Creds
 	Environment           string `mapstructure:"ENVIRONMENT"`
 
+	// Gemini API Key
+	GEMINI_API_KEY string `mapstructure:"GEMINI_API_KEY"`
+
+	// Listen Address
 	ListenAddr 		 string    `mapstructure:"LISTEN_ADDR"`
 
 	// Axiom Creds
@@ -52,6 +56,11 @@ func LoadEnvironmentVariables(envFile string) (*Env, error) {
 // IsDevelopment returns true if the environment is development
 func IsDevelopment() bool {
 	return viper.GetString("ENVIRONMENT") == "development"
+}
+
+// GeminiAPIKey returns the Gemini API key which used for AI models from Google.
+func GetGeminiAPIKey() string {
+	return viper.GetString("GEMINI_API_KEY")
 }
 
 func GetAxiomToken() string {
