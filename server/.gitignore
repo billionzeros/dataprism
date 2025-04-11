@@ -13,6 +13,8 @@
 /prisma/db.sqlite-journal
 db.sqlite
 
+mock/
+
 # next.js
 /.next/
 /out/
