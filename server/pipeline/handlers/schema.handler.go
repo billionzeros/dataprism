@@ -1,5 +1,7 @@
 package handlers
 
+import "github.com/OmGuptaIND/shooting-star/db/models"
+
 // ProcessHeaderDetails contains the details of the headers in a CSV file.
 type CSVDetails struct {
 	// The name of the CSV file
@@ -28,4 +30,7 @@ type CSVDetails struct {
 
 	// The Data types of the values under each header
 	DataTypes map[string]string
+
+	// Information about the upload of the file
+	UploadInfo *models.Upload
 }

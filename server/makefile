@@ -29,6 +29,9 @@ migrate-up:
 migrate-down:
 	@goose down postgres -env .env -dir db/migrations
 
+migrate-down-all:
+	@goose down-to 0 postgres -env .env -dir db/migrations
+
 migrate-upto:
 	@goose up-to $(filter-out $@,$(MAKECMDGOALS)) postgres -env .env -dir db/migrations
 

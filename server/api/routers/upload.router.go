@@ -43,16 +43,30 @@ func (d *UploadRouter) uploadCsv(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
 	}
 
-	filePath := "/Users/omg/Desktop/01/shooting-star/server/data/mock_file_2.csv"
+	if req.FileName == "" || req.FilePath == "" {
+		d.logger.Error("Invalid request parameters", zap.String("fileName", req.FileName), zap.String("filePath", req.FilePath))
+		return responses.BadRequest(c, appError.InternalError, "File name and file path are required")
+	}
+
+	d.logger.Info("Received CSV upload request", zap.String("fileName", req.FileName))
 
 	csvHandler := handlers.NewCSVHandler(d.ctx)
 	defer csvHandler.Close()
 
-	csvDetails, err := csvHandler.ExtractCSVDetails(filePath)
+	csvDetails, err := csvHandler.ExtractCSVDetails(req.FilePath)
 	if err != nil {
 		d.logger.Error("Error extracting CSV details", zap.Error(err))
 		return responses.BadRequest(c, appError.InternalError, "Failed to extract CSV details")
 	}
+
+	uploadInfo, err := csvHandler.UploadCSV(csvDetails)
+	if err != nil {
+		d.logger.Error("Error uploading CSV file", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Failed to upload CSV file")
+	}
+
+	// Set the upload information in the CSV details
+	csvDetails.UploadInfo = uploadInfo
 
 	err = csvHandler.ProcessAndEmbedCSV(csvDetails)
 	if err != nil {
@@ -60,5 +74,5 @@ func (d *UploadRouter) uploadCsv(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Failed to process CSV file")
 	}
 
-	return responses.OK(c, "CSV file processed successfully")
+	return responses.OK(c, "CSV file Processed Successfully")
 }

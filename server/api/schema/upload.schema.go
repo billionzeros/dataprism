@@ -7,6 +7,9 @@ type UploadCsvRequest struct {
 	// Name of the Document being uploaded
 	FileName string `json:"file_name" validate:"required"`
 
+	// Path to the Document being uploaded
+	FilePath string `json:"file_path" validate:"required"`
+
 	// Description of the Document being uploaded
 	Description string `json:"description" validate:"required"`
 }

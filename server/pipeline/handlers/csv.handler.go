@@ -13,6 +13,8 @@ import (
 
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
+	"github.com/OmGuptaIND/shooting-star/db"
+	"github.com/OmGuptaIND/shooting-star/db/models"
 	"github.com/OmGuptaIND/shooting-star/pipeline/provider"
 	"github.com/OmGuptaIND/shooting-star/utils"
 	"github.com/google/generative-ai-go/genai"
@@ -50,6 +52,25 @@ func (c *csvHandler) Close() {
 	c.cancelFunc()
 }
 
+// UploadCSV uploads the CSV file to the server and processes it.
+func (c *csvHandler) UploadCSV(details *CSVDetails) (*models.Upload, error) {
+	c.logger.Info("Uploading CSV file", zap.String("fileName", details.FileName))
+
+	file := &models.Upload{
+		SourceType: models.UploadTypeCSV,
+		SourceIdentifier: details.FileName,
+		FileLocation: details.FilePath,
+	}
+
+	if err := db.Conn.Create(&file).Error; err != nil {
+		c.logger.Error("Error creating upload record", zap.Error(err))
+		return nil, appError.New(appError.InternalError, "failed to create upload record", err)
+	}
+
+	c.logger.Info("CSV file uploaded successfully", zap.String("FileName", details.FileName))
+	return file, nil
+} 
+
 // ProcessAndEmbedCSV processes the CSV file and embeds it.
 func (c *csvHandler) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 	c.logger.Info("Processing CSV file", zap.String("FileName", details.FileName))
@@ -62,8 +83,9 @@ func (c *csvHandler) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 
 	em := genClient.EmbeddingModel(string(provider.Embedding001))
 
+	// Create a new batch for embedding, which will be used to store the content
 	b := em.NewBatch()
-
+	embeddedContents := make([]string, 0, len(details.Headers))
 	for _, column := range details.Headers {
 		title := fmt.Sprintf("CSV: %s, Column: %s", details.FileName, column)
 
@@ -73,11 +95,10 @@ func (c *csvHandler) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 		}
 
 		content := fmt.Sprintf("Column: %s\nDescription: %s", column, desc)
-		contentPart := genai.Text(content)
 
-		c.logger.Info("CSV Embedding content", zap.String("title", title), zap.String("content", content))
+		b.AddContentWithTitle(title, genai.Text(content))
 
-		b.AddContentWithTitle(title, contentPart)
+		embeddedContents = append(embeddedContents, content)
 	}
 
 	res, err := em.BatchEmbedContents(c.ctx, b)
@@ -85,11 +106,28 @@ func (c *csvHandler) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 		return appError.New(appError.InternalError, err.Error(), err)
 	}
 
-	c.logger.Info("CSV file processed and embedded successfully", zap.String("filePath", details.FileName))
+	c.logger.Info("CSV file processed and embedding created", zap.String("fileName", details.FileName))
+
+	vectorEmbeddings := make([]*models.VectorEmbedding, 0, len(res.Embeddings))
 
 	for i, e := range res.Embeddings {
-		c.logger.Sugar().Info("CSV embedding", details.Headers[i], e)
+		vectorEmbedding := &models.VectorEmbedding{
+			SourceType: models.EmbeddingSourceTypeCSVColumn,
+			RelatedID: details.UploadInfo.ID,
+			SourceIdentifier: details.FileName,
+			ColumnOrChunkName: details.Headers[i],
+			OriginalText: embeddedContents[i],
+			Embedding: e.Values,
+		}
+
+		vectorEmbeddings = append(vectorEmbeddings, vectorEmbedding)
 	}
+
+	if err := db.Conn.CreateInBatches(vectorEmbeddings, 10).Error; err != nil {
+		return appError.New(appError.InternalError, err.Error(), err)
+	}
+
+	c.logger.Info("CSV file processed and stored successfully", zap.String("fileName", details.FileName))
 
 	return nil
 }
