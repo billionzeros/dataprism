@@ -6,7 +6,7 @@ interface Props {
 	className?: string;
 }
 
-const Tools: React.FC<Props> = ({ className }) => {
+const Sidebar: React.FC<Props> = ({ className }) => {
 	return (
 		<div className={cn("h-screen top-0 sticky", className)}>
 			<div className="border-r-[1px] h-full flex flex-col items-center pt-4 px-3 gap-5 w-fit border-custom-gray-primary">
@@ -64,4 +64,4 @@ const Tools: React.FC<Props> = ({ className }) => {
 	);
 };
 
-export default Tools;
+export default Sidebar;

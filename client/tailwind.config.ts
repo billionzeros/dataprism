@@ -65,6 +65,16 @@ export default {
 					"4": "hsl(var(--chart-4))",
 					"5": "hsl(var(--chart-5))",
 				},
+				sidebar: {
+					DEFAULT: "#1A1A1A", // bg-custom-background
+					foreground: "#8F8E8A", // bg-custom-gray-secondary
+					primary: "hsl(var(--sidebar-primary))",
+					"primary-foreground": "pink",
+					accent: "#2F3437",
+					"accent-foreground": "white",
+					border: "#8F8E8A",
+					ring: "hsl(var(--sidebar-ring))",
+				},
 			},
 		},
 	},

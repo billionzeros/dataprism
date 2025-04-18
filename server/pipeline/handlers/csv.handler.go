@@ -15,7 +15,7 @@ import (
 	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/OmGuptaIND/shooting-star/db"
 	"github.com/OmGuptaIND/shooting-star/db/models"
-	"github.com/OmGuptaIND/shooting-star/pipeline/provider"
+	"github.com/OmGuptaIND/shooting-star/provider"
 	"github.com/OmGuptaIND/shooting-star/utils"
 	"github.com/google/generative-ai-go/genai"
 	"go.uber.org/zap"

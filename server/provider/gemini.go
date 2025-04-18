@@ -24,10 +24,13 @@ const (
 
 	// Gemini 1.5 Pro Latest
 	Gemini1_5ProLatest GeminiModels = "gemini-1.5-pro-latest"
+
+	// Gemini 2.0 Flash
+	Gemini2_0Flash GeminiModels = "gemini-2.0-flash"
 )
 
 // geminiEmbedding is a struct that implements the Embedding interface
-type geminiEmbedding struct {
+type geminiProvider struct {
 	ctx context.Context
 
 	// Google Gemini API client
@@ -37,7 +40,7 @@ type geminiEmbedding struct {
 }
 
 // Create a new instance of geminiEmbedding
-func NewGeminiProvider(ctx context.Context) (*geminiEmbedding, error) {
+func NewGeminiProvider(ctx context.Context) (*geminiProvider, error) {
 	l := logger.FromCtx(ctx)
 
 	genClient, err := genai.NewClient(ctx, option.WithAPIKey(env.GetGeminiAPIKey()))
@@ -46,7 +49,7 @@ func NewGeminiProvider(ctx context.Context) (*geminiEmbedding, error) {
 		return nil, err
 	}
 
-	return &geminiEmbedding{
+	return &geminiProvider{
 		ctx:    ctx,
 		Client: *genClient,
 		logger: logger.FromCtx(ctx),
