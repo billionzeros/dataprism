@@ -3,17 +3,18 @@ import {
 	SidebarContent,
 	SidebarHeader,
 	SidebarRail,
+	SidebarSeparator,
 	useSidebar,
 } from "@/components/ui/sidebar";
 import AppSidebarHeader from "./AppSidebarHeader";
 import GroupWorkspace from "./Group/GroupWorkspace";
 import GroupSources from "./Group/GroupSources";
 import { cn } from "@/lib/utils";
-import GroupNewBlock from "./Group/GroupNewBlock";
 import GroupChats from "./Group/GroupChats";
 import GroupExtra from "./Group/GroupExtra";
-
-// Menu items.
+import Icon from "../Icon";
+import { ArrowRight, X } from "lucide-react";
+import { useState } from "react";
 
 export function AppSidebar() {
 	const { open, toggleSidebar } = useSidebar();
@@ -38,6 +39,8 @@ export function AppSidebar() {
 				</div>
 
 				<div className="mb-20">
+					<InfoCard />
+					<SidebarSeparator className="my-2" />
 					<GroupExtra open={open} />
 				</div>
 			</SidebarContent>
@@ -46,3 +49,46 @@ export function AppSidebar() {
 		</Sidebar>
 	);
 }
+
+const InfoCard = () => {
+	const [open, setOpen] = useState(true);
+
+	if (!open) {
+		return null;
+	}
+
+	return (
+		<div className="border-[2px] border-custom-gray-primary m-2 p-3 rounded-md flex flex-col gap-1 shadow-md">
+			<div className="flex items-center justify-between">
+				<div className="text-sm text-custom-text-primary/80 mb-[3px] font-bold font-inter select-none cursor-default">
+					Prism AI
+				</div>
+
+				<Icon
+					className="hover:bg-custom-gray-primary aspect-square p-[2px] shadow-md rounded-sm cursor-pointer transition-all duration-200 ease-in-out"
+					size={18}
+					icon={X}
+					onClick={() => setOpen(false)}
+					aria-label="Close"
+					aria-hidden="true"
+					aria-controls="info-card"
+					aria-expanded={open}
+					aria-describedby="info-card"
+					aria-labelledby="info-card"
+				/>
+			</div>
+			<p className="text-xs text-custom-gray-secondary font-inter select-none cursor-default">
+				Built to make <u>data talk to you</u> !! <br /> <br /> Ask Questions,
+				and keep your conversations with LLMs organised.
+			</p>
+			<div className="text-custom-text-primary/80 cursor-pointer hover:text-custom-text-primary group flex items-center gap-1 text-xs font-bold font-inter mt-2">
+				<span>Unlock Potential</span>
+				<Icon
+					className="text-custom-text-primary/80 group-hover:text-custom-text-primary"
+					size={12}
+					icon={ArrowRight}
+				/>
+			</div>
+		</div>
+	);
+};
