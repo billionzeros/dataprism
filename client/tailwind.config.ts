@@ -66,14 +66,16 @@ export default {
 					"5": "hsl(var(--chart-5))",
 				},
 				sidebar: {
-					DEFAULT: "#1A1A1A", // bg-custom-background
-					foreground: "#8F8E8A", // bg-custom-gray-secondary
-					primary: "hsl(var(--sidebar-primary))",
-					"primary-foreground": "pink",
-					accent: "#2F3437",
-					"accent-foreground": "white",
-					border: "#8F8E8A",
+					DEFAULT: "#1A1A1A", // custom-background
+					foreground: "#8F8E8A", // custom-gray-secondary
+					"accent-foreground": "#8F8E8A", // custom-gray-secondary
+
+					accent: "#2F3437", // custom-gray-primary
+					border: "#2F3437", // custom-gray-primary
+
 					ring: "hsl(var(--sidebar-ring))",
+					"primary-foreground": "blue",
+					primary: "yellow",
 				},
 			},
 		},
