@@ -1,14 +1,12 @@
 import {
 	SidebarMenu,
 	SidebarMenuItem,
-	SidebarMenuButton, // Import SidebarMenuButton
+	SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Command, PanelRightClose, PanelRightOpen } from "lucide-react";
 import type React from "react";
 import Icon from "../Icon";
-import { cn } from "@/lib/utils"; // Import cn
-import { Tooltip } from "@radix-ui/react-tooltip";
-import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 type SidebarHeaderProps = {
 	open: boolean;

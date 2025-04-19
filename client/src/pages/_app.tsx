@@ -1,6 +1,7 @@
 import type { AppType } from "next/app";
 import { Inter } from "next/font/google";
 import { api } from "../utils/trpc";
+import { Toaster } from "@/components/ui/toaster";
 
 import "@/styles/globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -24,6 +25,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
 					</div>
 				</TooltipProvider>
 			</SidebarProvider>
+			<Toaster />
 		</div>
 	);
 };

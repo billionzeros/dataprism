@@ -9,13 +9,11 @@ import {
 } from "@/components/ui/sidebar";
 import React, { useState } from "react";
 import {
-	ArrowDown,
+	ChartNoAxesColumnDecreasingIcon,
+	ChartNoAxesColumnIncreasing,
 	ChevronDown,
-	Folder,
-	FolderKanban,
-	Leaf,
-	Star,
-	Users,
+	File,
+	Files,
 } from "lucide-react";
 import {
 	Collapsible,
@@ -28,33 +26,23 @@ import { useRouter } from "next/router";
 
 const items = [
 	{
-		title: "Energy Sector",
-		projectId: "abcd-1234",
-		icon: Leaf,
+		title: "Daily Active Users",
+		pageId: "daily-active-users-lmno-789",
+		icon: ChartNoAxesColumnIncreasing,
 	},
 	{
-		title: "Project Alpha",
-		projectId: "efgh-5678",
-		icon: Folder,
+		title: "Investors Report",
+		pageId: "investors-report-abcd-123",
+		icon: ChartNoAxesColumnDecreasingIcon,
 	},
 	{
-		title: "Beta Initiative",
-		projectId: "ijkl-9101",
-		icon: Folder,
-	},
-	{
-		title: "Shared Spaces",
-		projectId: "mnop-1121",
-		icon: Users,
-	},
-	{
-		title: "Favourites",
-		projectId: "qrst-3141",
-		icon: Star,
+		title: "Daily Analytics",
+		pageId: "daily-analytics-efgh-456",
+		icon: File,
 	},
 ];
 
-const GroupWorkspace = () => {
+const GroupPages = () => {
 	const router = useRouter();
 
 	const [collapseOpen, setCollapseOpen] = useState(true);
@@ -82,7 +70,7 @@ const GroupWorkspace = () => {
 				<SidebarMenuItem className="cursor-default">
 					<SidebarMenuButton
 						tooltip={{
-							children: "Workspaces",
+							children: "Pages",
 							className: "bg-black text-custom-text-primary",
 							side: "right",
 						}}
@@ -100,10 +88,10 @@ const GroupWorkspace = () => {
 										size={16}
 										strokeWidth={2}
 										className="font-bold"
-										icon={FolderKanban}
+										icon={Files}
 									/>
 									<p className="text-xs text-left font-semibold translate-y-[1px]">
-										Workspaces
+										Pages
 									</p>
 								</div>
 								<Icon
@@ -124,7 +112,7 @@ const GroupWorkspace = () => {
 							{items.map((item) => (
 								<SidebarMenuSubItem
 									onClick={() => {
-										router.push(`/workspace/${item.projectId}`);
+										router.push(`/workspace/page/${item.pageId}`);
 									}}
 									key={item.title}
 								>
@@ -147,4 +135,4 @@ const GroupWorkspace = () => {
 	);
 };
 
-export default GroupWorkspace;
+export default GroupPages;

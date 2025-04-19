@@ -1,12 +1,11 @@
-import Header from "@/components/header/Header";
 import React from "react";
-import Prism from "@/components/prism/Prism";
 
 const DashPage = () => {
 	return (
 		<main className="bg-custom-background min-w-screen min-h-screen max-w-full">
-			{/* <Header /> */}
-			<Prism />
+			<div className="h-full grid place-content-center">
+				<h1 className="text-custom-text-primary">Worksapce</h1>
+			</div>
 		</main>
 	);
 };

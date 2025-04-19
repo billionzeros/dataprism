@@ -13,7 +13,7 @@ const InfoCard: React.FC<{ sidebarOpen: boolean }> = ({ sidebarOpen }) => {
 	return (
 		<div
 			className={cn(
-				"border-[2px] border-custom-gray-primary m-2 p-3 rounded-md flex flex-col gap-1 shadow-md",
+				"border-[2px] select-none border-custom-gray-primary m-2 p-3 rounded-md flex flex-col gap-1 shadow-md",
 				sidebarOpen ? "delay-300 opacity-100" : "opacity-0",
 			)}
 		>

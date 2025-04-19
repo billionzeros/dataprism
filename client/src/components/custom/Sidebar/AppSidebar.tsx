@@ -11,14 +11,18 @@ import GroupWorkspace from "./Group/GroupWorkspace";
 import GroupSources from "./Group/GroupSources";
 import { cn } from "@/lib/utils";
 import GroupChats from "./Group/GroupChats";
-import GroupExtra from "./Group/GroupExtra";
 import type React from "react";
 import InfoCard from "./InfoCard";
 import BaseMenuItem from "./BaseMenuItem";
 import { Home, LifeBuoy, Settings } from "lucide-react";
+import GroupPages from "./Group/GroupPages";
+import { useRouter } from "next/router";
 
 export function AppSidebar() {
+	const router = useRouter();
+
 	const { open, toggleSidebar } = useSidebar();
+
 	return (
 		<Sidebar collapsible="icon" className="bg-custom-background">
 			<SidebarHeader className="mb-2">
@@ -27,14 +31,27 @@ export function AppSidebar() {
 
 			<SidebarContent
 				className={cn(
-					"flex flex-col justify-between gap-3",
-					!open ? "items-center" : "",
+					open
+						? "grid grid-rows-[10fr_2fr] gap-2 overflow-hidden"
+						: "flex flex-col justify-between gap-3",
 				)}
 			>
-				<div className="flex flex-col w-full items-center gap-1">
-					<BaseMenuItem title="Home" open={open} icon={Home} />
+				<div className="flex flex-col w-full items-center overflow-scroll">
+					<div className="sticky top-0 w-full bg-custom-background z-50">
+						<BaseMenuItem
+							onClick={() => {
+								router.push("/");
+							}}
+							title="Home"
+							open={open}
+							icon={Home}
+						/>
+						<SidebarSeparator className="my-2 shadow-md" />
+					</div>
+
 					<div className="px-2 flex items-center w-full flex-col gap-2">
-						<GroupWorkspace />
+						{router.pathname.includes("/workspace") ? <GroupPages /> : null}
+						{router.pathname === "/" ? <GroupWorkspace /> : null}
 						<GroupSources />
 						<GroupChats />
 					</div>
