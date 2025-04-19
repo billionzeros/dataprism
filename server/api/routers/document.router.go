@@ -9,7 +9,7 @@ import (
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/OmGuptaIND/shooting-star/db/models"
-	"github.com/OmGuptaIND/shooting-star/services"
+	documentservice "github.com/OmGuptaIND/shooting-star/services/document"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -18,7 +18,7 @@ import (
 // DocumentRouter handles the routing for document-related endpoints.
 type DocumentRouter struct {
 	ctx context.Context
-	documentService services.DocumentService
+	documentService documentservice.DocumentService
 
 	logger *zap.Logger
 }
@@ -27,7 +27,7 @@ type DocumentRouter struct {
 func RegisterDocumentRoutes(ctx context.Context, baseRouter fiber.Router) {
 	handler := &DocumentRouter{
 		ctx: ctx,
-		documentService: services.NewDocumentService(ctx),
+		documentService: documentservice.New(ctx),
 		logger: logger.FromCtx(ctx),
 	}
 

@@ -1,4 +1,4 @@
-package services
+package documentservice
 
 import (
 	"context"
@@ -14,25 +14,10 @@ type documentService struct {
 	logger *zap.Logger
 }
 
-type DocumentService interface {
-	// CreateDocument creates a new document in the database.
-	CreateDocument(document *models.Document) (*models.Document, error)
 
-	// GetDocumentByID retrieves a document by its ID from the database.
-	GetDocumentByID(id string) (*models.Document, error)
 
-	// DeleteDocument deletes a document from the database.
-	DeleteDocument(id string) error
-
-	// GetDocumentByTitle retrieves a document by its title from the database.
-	GetDocumentByTitle(title string) (*models.Document, error)
-
-	// GetAllDocuments retrieves all documents from the database.
-	GetAllDocuments() ([]*models.Document, error)
-}
-
-// NewDocumentService creates a new instance of DocumentService with the provided logger.
-func NewDocumentService(ctx context.Context) DocumentService {
+// Creates a new instance of DocumentService with the provided logger.
+func New(ctx context.Context) DocumentService {
 	return &documentService{
 		ctx: ctx,
 		logger: logger.FromCtx(ctx),
