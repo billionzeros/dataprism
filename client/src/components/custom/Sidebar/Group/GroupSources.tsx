@@ -5,9 +5,17 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
+	useSidebar,
 } from "@/components/ui/sidebar";
-import React from "react";
-import { Database, DatabaseZap, FileText, Network, Plus } from "lucide-react";
+import React, { useState } from "react";
+import {
+	ChevronDown,
+	Database,
+	DatabaseZap,
+	FileText,
+	Network,
+	Plus,
+} from "lucide-react";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -20,6 +28,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
+import { cn } from "@/lib/utils";
 
 const items = [
 	{
@@ -40,9 +49,28 @@ const items = [
 ];
 
 const GroupSources = () => {
+	const [collapseOpen, setCollapseOpen] = useState(true);
+	const { open: sidebarOpen, setOpen } = useSidebar();
+
+	const handleOpen = () => {
+		if (!sidebarOpen) {
+			setOpen(true);
+
+			if (!collapseOpen) {
+				setCollapseOpen(true);
+			}
+		}
+	};
+
+	const toggleCollapse = () => {
+		if (sidebarOpen) {
+			setCollapseOpen((prev) => !prev);
+		}
+	};
+
 	return (
 		<SidebarMenu>
-			<Collapsible defaultOpen asChild className="group/collapsible">
+			<Collapsible open={collapseOpen} asChild className="group/collapsible">
 				<SidebarMenuItem className="cursor-default">
 					<SidebarMenuButton
 						tooltip={{
@@ -50,39 +78,39 @@ const GroupSources = () => {
 							className: "bg-black text-custom-text-primary",
 							side: "right",
 						}}
+						onClick={handleOpen}
 						className="flex select-none items-center justify-between gap-2"
 					>
 						<CollapsibleTrigger
 							asChild
 							className="cursor-pointer flex-1 items-start"
+							onClick={toggleCollapse}
 						>
-							<div className="flex items-center gap-2">
-								<Icon
-									size={17}
-									strokeWidth={2}
-									className="font-bold"
-									icon={DatabaseZap}
-								/>
-								<p className="text-xs text-left font-semibold translate-y-[1px]">
-									Sources
-								</p>
-							</div>
-						</CollapsibleTrigger>
-						{/* <Tooltip>
-							<TooltipTrigger>
-								<div className="p-[3px] hover:scale-110 group hover:bg-custom-gray-secondary/30 duration-100 transition-all select-none rounded-md">
+							<div className="flex items-center justify-between ">
+								<div className="flex items-center gap-2">
 									<Icon
-										size={18}
+										size={16}
 										strokeWidth={2}
-										className="font-bold group-hover:text-white"
-										icon={Plus}
+										className="font-bold"
+										icon={DatabaseZap}
+									/>
+									<p className="text-xs text-left font-semibold translate-y-[1px]">
+										Sources
+									</p>
+								</div>
+								<div>
+									<Icon
+										className={cn(
+											!collapseOpen
+												? "-rotate-90 translate-y-[1px] duration-200 transition-all ease-in-out"
+												: "duration-200 translate-y-[1px] ease-in-out",
+										)}
+										size={14}
+										icon={ChevronDown}
 									/>
 								</div>
-							</TooltipTrigger>
-							<TooltipContent side="right" className="bg-black shadow-md">
-								<p className="text-xs">Talk to Prism</p>
-							</TooltipContent>
-						</Tooltip> */}
+							</div>
+						</CollapsibleTrigger>
 					</SidebarMenuButton>
 
 					<CollapsibleContent>

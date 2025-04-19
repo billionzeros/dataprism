@@ -48,10 +48,8 @@ const AppSidebarHeader: React.FC<SidebarHeaderProps> = ({
 					)}
 				</div>
 				{open && (
-					// <Tooltip>
-					// 	<TooltipTrigger>
 					<SidebarMenuButton
-						className="w-fit hover:bg-sidebar-accent p-0"
+						className="w-fit hover:bg-sidebar-accent"
 						onClick={toggleSidebar}
 						tooltip={{
 							children: "Toggle Sidebar",
@@ -60,6 +58,8 @@ const AppSidebarHeader: React.FC<SidebarHeaderProps> = ({
 						}}
 					>
 						<Icon
+							size={2}
+							strokeWidth={2}
 							icon={PanelRightOpen}
 							className="text-sidebar-foreground hover:text-sidebar-accent-foreground"
 						/>

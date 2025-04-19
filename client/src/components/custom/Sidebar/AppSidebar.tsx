@@ -2,9 +2,6 @@ import {
 	Sidebar,
 	SidebarContent,
 	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
 	SidebarRail,
 	SidebarSeparator,
 	useSidebar,
@@ -15,10 +12,10 @@ import GroupSources from "./Group/GroupSources";
 import { cn } from "@/lib/utils";
 import GroupChats from "./Group/GroupChats";
 import GroupExtra from "./Group/GroupExtra";
-import Icon from "../Icon";
-import { ArrowRight, X } from "lucide-react";
-import React, { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type React from "react";
+import InfoCard from "./InfoCard";
+import BaseMenuItem from "./BaseMenuItem";
+import { Home, LifeBuoy, Settings } from "lucide-react";
 
 export function AppSidebar() {
 	const { open, toggleSidebar } = useSidebar();
@@ -35,6 +32,7 @@ export function AppSidebar() {
 				)}
 			>
 				<div className="flex flex-col w-full items-center gap-1">
+					<BaseMenuItem title="Home" open={open} icon={Home} />
 					<div className="px-2 flex items-center w-full flex-col gap-2">
 						<GroupWorkspace />
 						<GroupSources />
@@ -45,7 +43,8 @@ export function AppSidebar() {
 				<div className="mb-5">
 					<InfoCard sidebarOpen={open} />
 					<SidebarSeparator className="my-2" />
-					<GroupExtra open={open} />
+					<BaseMenuItem title="Resources" open={open} icon={LifeBuoy} />
+					<BaseMenuItem title="Settings" open={open} icon={Settings} />
 				</div>
 			</SidebarContent>
 
@@ -53,49 +52,3 @@ export function AppSidebar() {
 		</Sidebar>
 	);
 }
-
-const InfoCard: React.FC<{ sidebarOpen: boolean }> = ({ sidebarOpen }) => {
-	const [open, setOpen] = useState(true);
-
-	if (!open) {
-		return null;
-	}
-
-	return (
-		<div
-			className={cn(
-				"border-[2px] border-custom-gray-primary m-2 p-3 rounded-md flex flex-col gap-1 shadow-md",
-				sidebarOpen ? "delay-300 opacity-100" : "opacity-0",
-			)}
-		>
-			<div className="flex items-center justify-between">
-				<div className="text-sm text-custom-text-primary/80 mb-[3px] font-bold font-inter select-none cursor-default">
-					Prism AI
-				</div>
-
-				<Icon
-					className="hover:bg-custom-gray-primary aspect-square p-[2px] shadow-md rounded-sm cursor-pointer transition-all duration-200 ease-in-out"
-					size={18}
-					icon={X}
-					onClick={() => setOpen(false)}
-					aria-label="Close"
-					aria-hidden="true"
-					aria-controls="info-card"
-					aria-expanded={open}
-				/>
-			</div>
-			<p className="text-xs text-custom-gray-secondary font-inter select-none cursor-default">
-				Built to make <u>data talk to you</u> !! <br /> <br /> Ask Questions,
-				and keep your conversations with LLMs organised.
-			</p>
-			<div className="text-custom-text-primary/80 cursor-pointer hover:text-custom-text-primary group flex items-center gap-1 text-xs font-bold font-inter mt-2">
-				<span>Unlock Potential</span>
-				<Icon
-					className="text-custom-text-primary/80 group-hover:text-custom-text-primary"
-					size={12}
-					icon={ArrowRight}
-				/>
-			</div>
-		</div>
-	);
-};
