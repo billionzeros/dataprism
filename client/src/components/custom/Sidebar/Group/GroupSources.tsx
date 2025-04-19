@@ -25,17 +25,17 @@ const items = [
 	{
 		title: "Primary DB",
 		url: "#",
-		icon: <Icon icon={Database} strokeWidth={2} size={14} />,
+		icon: Database,
 	},
 	{
 		title: "Analytics API",
 		url: "#",
-		icon: <Icon icon={Network} strokeWidth={2} size={14} />,
+		icon: Network,
 	},
 	{
 		title: "Uploaded Docs",
 		url: "#",
-		icon: <Icon icon={FileText} strokeWidth={2} size={14} />,
+		icon: FileText,
 	},
 ];
 
@@ -51,18 +51,19 @@ const GroupSources = () => {
 						<SidebarMenuButton
 							tooltip={{
 								children: "Sources",
-								className: "bg-custom-gray-primary text-custom-gray-secondary",
+								className: "bg-black text-custom-text-primary",
+								side: "right",
 							}}
-							className="flex items-center justify-between gap-2"
+							className="flex select-none items-center justify-between gap-2"
 						>
 							<div className="flex items-center gap-2">
 								<Icon
-									size={16}
+									size={17}
 									strokeWidth={2}
 									className="font-bold"
 									icon={DatabaseZap}
 								/>
-								<p className="text-xs text-left font-medium translate-y-[1px]">
+								<p className="text-xs text-left font-semibold translate-y-[1px]">
 									Sources
 								</p>
 							</div>
@@ -78,7 +79,10 @@ const GroupSources = () => {
 										/>
 									</div>
 								</TooltipTrigger>
-								<TooltipContent className="bg-custom-gray-primary shadow-md">
+								<TooltipContent
+									side="right"
+									className="bg-black text-custom-text-primary shadow-md"
+								>
 									<p className="text-xs">Add Source</p>
 									<TooltipArrow className="fill-custom-gray-primary/80 shadow-md" />
 								</TooltipContent>
@@ -89,12 +93,15 @@ const GroupSources = () => {
 					<CollapsibleContent>
 						<SidebarMenuSub>
 							{items.map((item) => (
-								<SidebarMenuSubItem key={item.title}>
+								<SidebarMenuSubItem
+									className="select-none cursor-pointer"
+									key={item.title}
+								>
 									<SidebarMenuSubButton asChild>
-										<a href={item.url}>
-											{item.icon}
+										<div>
+											<Icon className="font-bold" icon={item.icon} />
 											<span>{item.title}</span>
-										</a>
+										</div>
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							))}

@@ -32,17 +32,17 @@ const items = [
 	{
 		title: "Chat with Prism AI",
 		url: "#",
-		icon: <Icon icon={Bot} strokeWidth={2} size={14} />,
+		icon: Bot,
 	},
 	{
 		title: "Team Sync",
 		url: "#",
-		icon: <Icon icon={Users} strokeWidth={2} size={14} />,
+		icon: Users,
 	},
 	{
 		title: "General Discussion",
 		url: "#",
-		icon: <Icon icon={MessageCircle} strokeWidth={2} size={14} />,
+		icon: MessageCircle,
 	},
 ];
 
@@ -58,9 +58,10 @@ const GroupChats = () => {
 						<SidebarMenuButton
 							tooltip={{
 								children: "Prism Chats",
-								className: "bg-custom-gray-primary text-custom-gray-secondary",
+								className: "bg-black text-custom-text-primary",
+								side: "right",
 							}}
-							className="flex items-center justify-between gap-2"
+							className="flex select-none items-center justify-between gap-2"
 						>
 							<div className="flex items-center gap-2">
 								<Icon
@@ -69,7 +70,7 @@ const GroupChats = () => {
 									className="font-bold"
 									icon={MessagesSquare}
 								/>
-								<p className="text-xs text-left font-medium translate-y-[1px]">
+								<p className="text-xs text-left font-semibold translate-y-[1px]">
 									Chats
 								</p>
 							</div>
@@ -78,16 +79,15 @@ const GroupChats = () => {
 								<TooltipTrigger>
 									<div className="p-[3px] hover:scale-110 group hover:bg-custom-gray-secondary/30 duration-100 transition-all select-none rounded-md">
 										<Icon
-											size={16}
+											size={18}
 											strokeWidth={2}
 											className="font-bold group-hover:text-white"
 											icon={Plus}
 										/>
 									</div>
 								</TooltipTrigger>
-								<TooltipContent className="bg-custom-gray-primary shadow-md">
+								<TooltipContent side="right" className="bg-black shadow-md">
 									<p className="text-xs">Talk to Prism</p>
-									<TooltipArrow className="fill-custom-gray-primary/80 shadow-md" />
 								</TooltipContent>
 							</Tooltip>
 						</SidebarMenuButton>
@@ -97,11 +97,14 @@ const GroupChats = () => {
 						<SidebarMenuSub>
 							{items.map((item) => (
 								<SidebarMenuSubItem key={item.title}>
-									<SidebarMenuSubButton asChild>
-										<a href={item.url}>
-											{item.icon}
+									<SidebarMenuSubButton
+										className="select-none cursor-pointer"
+										asChild
+									>
+										<div>
+											<Icon icon={item.icon} />
 											<span>{item.title}</span>
-										</a>
+										</div>
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							))}

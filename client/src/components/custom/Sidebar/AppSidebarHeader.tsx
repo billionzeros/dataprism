@@ -1,7 +1,12 @@
-import { SidebarHeader } from "@/components/ui/sidebar";
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import {
+	SidebarMenu,
+	SidebarMenuItem,
+	SidebarMenuButton, // Import SidebarMenuButton
+} from "@/components/ui/sidebar";
+import { Command, PanelRightClose, PanelRightOpen } from "lucide-react";
 import type React from "react";
 import Icon from "../Icon";
+import { cn } from "@/lib/utils"; // Import cn
 
 type SidebarHeaderProps = {
 	open: boolean;
@@ -13,26 +18,47 @@ const AppSidebarHeader: React.FC<SidebarHeaderProps> = ({
 	toggleSidebar,
 }) => {
 	return (
-		<>
-			{open ? (
-				<div className="flex items-center justify-between">
-					<h1 className="text-2xl font-bold text-custom-text">Prism</h1>
-					{open ? (
-						<Icon
-							className="text-custom-gray-secondary cursor-pointer hover:scale-110 duration-150 transition-all"
-							icon={PanelRightOpen}
-							onClick={toggleSidebar}
-						/>
-					) : (
-						<Icon
-							className="text-custom-gray-secondary cursor-pointer hover:scale-110 duration-150 transition-all"
-							icon={PanelRightClose}
-							onClick={toggleSidebar}
-						/>
+		<SidebarMenu className="bg-none pt-2">
+			<SidebarMenuItem className="bg-none p-0 flex items-center justify-between">
+				<div
+					className={cn(
+						"flex items-center gap-2",
+						!open && "w-full justify-center",
+					)}
+				>
+					<div
+						className={cn(
+							"flex aspect-square items-center justify-center rounded-lg text-sidebar-primary-foreground",
+							"bg-custom-gray-primary/60 p-[6px] cursor-pointer",
+							"hover:bg-custom-gray-primary/80",
+							"transition-colors duration-200 ease-in-out",
+							"shadow-md",
+							"hover:scale-110",
+							"translate-x-[1px]",
+						)}
+					>
+						<Icon icon={Command} size={17} />
+					</div>
+					{open && (
+						<span className="translate-y-[1px] text-base font-semibold">
+							Prism
+						</span>
 					)}
 				</div>
-			) : null}
-		</>
+				{open && (
+					<SidebarMenuButton
+						className="h-8 w-8 hover:bg-sidebar-accent" // Adjust size and hover
+						onClick={toggleSidebar}
+					>
+						<Icon
+							icon={PanelRightOpen}
+							className="size-5 text-sidebar-foreground hover:text-sidebar-accent-foreground" // Adjust size and color
+						/>
+						<span className="sr-only">Toggle Sidebar</span>
+					</SidebarMenuButton>
+				)}
+			</SidebarMenuItem>
+		</SidebarMenu>
 	);
 };
 

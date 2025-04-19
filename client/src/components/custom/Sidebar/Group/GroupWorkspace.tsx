@@ -32,22 +32,22 @@ const items = [
 	{
 		title: "Project Alpha",
 		url: "#",
-		icon: <Icon icon={Folder} strokeWidth={2} size={14} />,
+		icon: Folder,
 	},
 	{
 		title: "Beta Initiative",
 		url: "#",
-		icon: <Icon icon={Folder} strokeWidth={2} size={14} />,
+		icon: Folder,
 	},
 	{
 		title: "Shared Spaces",
 		url: "#",
-		icon: <Icon icon={Users} strokeWidth={2} size={14} />,
+		icon: Users,
 	},
 	{
 		title: "Favourites",
 		url: "#",
-		icon: <Icon icon={Star} strokeWidth={2} size={14} />,
+		icon: Star,
 	},
 ];
 
@@ -63,10 +63,10 @@ const GroupWorkspace = () => {
 						<SidebarMenuButton
 							tooltip={{
 								children: "Workspace",
-								className:
-									"bg-custom-gray-primary text-custom-gray-secondary/80",
+								className: "bg-black text-custom-text-primary",
+								side: "right",
 							}}
-							className="flex items-center justify-between gap-2"
+							className="flex select-none items-center justify-between gap-2"
 						>
 							<div className="flex items-center gap-2">
 								<Icon
@@ -75,14 +75,14 @@ const GroupWorkspace = () => {
 									className="font-bold"
 									icon={FolderKanban}
 								/>
-								<p className="text-xs text-left font-medium translate-y-[1px]">
+								<p className="text-xs text-left font-semibold translate-y-[1px]">
 									Workspace
 								</p>
 							</div>
 
 							<Tooltip>
 								<TooltipTrigger>
-									<div className="p-[3px] hover:scale-110 group hover:bg-custom-gray-primar duration-100 transition-all select-none rounded-md">
+									<div className="p-[3px] hover:scale-110 group hover:bg-custom-gray-secondary/30 duration-100 transition-all select-none rounded-md">
 										<Icon
 											size={16}
 											strokeWidth={2}
@@ -91,8 +91,11 @@ const GroupWorkspace = () => {
 										/>
 									</div>
 								</TooltipTrigger>
-								<TooltipContent className="bg-custom-gray-primary shadow-md">
-									<p className="text-xs">Create new workspace</p>
+								<TooltipContent
+									side="right"
+									className="bg-black text-custom-text-primary shadow-md"
+								>
+									<p className="text-xs">Create New File</p>
 									<TooltipArrow className="fill-custom-gray-primary/80 shadow-md" />
 								</TooltipContent>
 							</Tooltip>
@@ -103,11 +106,14 @@ const GroupWorkspace = () => {
 						<SidebarMenuSub>
 							{items.map((item) => (
 								<SidebarMenuSubItem key={item.title}>
-									<SidebarMenuSubButton asChild>
-										<a href={item.url}>
-											{item.icon}
+									<SidebarMenuSubButton
+										className="select-none cursor-pointer"
+										asChild
+									>
+										<div>
+											<Icon icon={item.icon} />
 											<span>{item.title}</span>
-										</a>
+										</div>
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							))}

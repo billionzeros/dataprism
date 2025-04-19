@@ -21,22 +21,21 @@ const GroupExtra: React.FC<GroupExtraProps> = ({ open }) => {
 		>
 			<SidebarMenuItem>
 				<SidebarMenuButton
-					className="flex items-center gap-2"
+					className="flex cursor-pointer items-center gap-2"
 					tooltip={
 						!open
 							? {
 									children: "Resources",
 									side: "right",
-									className:
-										"bg-custom-gray-primary text-custom-text-primary/80",
+									className: "bg-black text-custom-text-primary",
 								}
 							: undefined
 					}
 					asChild
 				>
-					<a href="#">
+					<div>
 						<Icon
-							size={16}
+							size={17}
 							strokeWidth={2}
 							className="font-bold"
 							icon={LifeBuoy}
@@ -47,25 +46,24 @@ const GroupExtra: React.FC<GroupExtraProps> = ({ open }) => {
 							</p>
 						)}
 						{!open && <span className="sr-only">Resources</span>}
-					</a>
+					</div>
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 			<SidebarMenuItem>
 				<SidebarMenuButton
-					className="flex items-center gap-2"
+					className="flex cursor-pointer items-center gap-2"
 					tooltip={
 						!open
 							? {
 									children: "Settings",
 									side: "right",
-									className:
-										"bg-custom-gray-primary text-custom-text-primary/80",
+									className: "bg-black text-custom-text-primary",
 								}
 							: undefined
 					}
 					asChild
 				>
-					<a href="#">
+					<div>
 						<Icon
 							size={16}
 							strokeWidth={2}
@@ -78,7 +76,7 @@ const GroupExtra: React.FC<GroupExtraProps> = ({ open }) => {
 							</p>
 						)}
 						{!open && <span className="sr-only">Settings</span>}
-					</a>
+					</div>
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 		</SidebarMenu>
