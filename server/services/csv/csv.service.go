@@ -1,4 +1,4 @@
-package handlers
+package csvservice
 
 import (
 	"context"
@@ -21,12 +21,13 @@ import (
 	"go.uber.org/zap"
 )
 
-type csvHandler struct {
+type csvService struct {
 	ctx context.Context
 	cancelFunc context.CancelFunc
 
 	logger *zap.Logger
 }
+
 
 const (
 	// Number of sample rows to store for the SampleData field ***
@@ -36,24 +37,24 @@ const (
 	typeInferenceRowCount = 100
 )
 
-// NewCSVHandler creates a new instance of csvHandler with the provided context.
-func NewCSVHandler(ctx context.Context) *csvHandler {
+// New creates a new instance of csvService with the provided context.
+func New(ctx context.Context) *csvService {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
-	return &csvHandler{
+	return &csvService{
 		ctx:    ctx,
 		cancelFunc: cancelFunc,
-		logger: logger.FromCtx(ctx).With(zap.String("handler", "csvHandler")),
+		logger: logger.FromCtx(ctx).With(zap.String("handler", "csvService")),
 	}
 }
 
-// Close cancels the context of the csvHandler, allowing for cleanup.
-func (c *csvHandler) Close() {
+// Close cancels the context of the csvService, allowing for cleanup.
+func (c *csvService) Close() {
 	c.cancelFunc()
 }
 
 // UploadCSV uploads the CSV file to the server and processes it.
-func (c *csvHandler) UploadCSV(details *CSVDetails) (*models.Upload, error) {
+func (c *csvService) UploadCSV(details *CSVDetails) (*models.Upload, error) {
 	c.logger.Info("Uploading CSV file", zap.String("fileName", details.FileName))
 
 	file := &models.Upload{
@@ -72,7 +73,7 @@ func (c *csvHandler) UploadCSV(details *CSVDetails) (*models.Upload, error) {
 } 
 
 // ProcessAndEmbedCSV processes the CSV file and embeds it.
-func (c *csvHandler) ProcessAndEmbedCSV(details *CSVDetails) (error) {
+func (c *csvService) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 	c.logger.Info("Processing CSV file", zap.String("FileName", details.FileName))
 
 	genClient, err := provider.NewGeminiProvider(c.ctx)
@@ -135,7 +136,7 @@ func (c *csvHandler) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 // ExtractCSVDetails extracts the details of the CSV file, such as headers, data types, and sample data.
 // It also infers the data types of each column and retrieves descriptions for each header.
 // Asks the Gemini API for header descriptions based on the CSV file's content.
-func (c *csvHandler) ExtractCSVDetails(filePath string) (*CSVDetails, error) {
+func (c *csvService) ExtractCSVDetails(filePath string) (*CSVDetails, error) {
 	details := &CSVDetails{
 		FilePath: filePath,
 		HeadersDescription: make(map[string]string),
@@ -258,7 +259,7 @@ func (c *csvHandler) ExtractCSVDetails(filePath string) (*CSVDetails, error) {
 }
 
 // GetHeaderDescriptions retrieves the header descriptions from the CSV file, by sending a request to the Gemini API.
-func (c *csvHandler) getHeaderDescriptions(details *CSVDetails) (map[string]string, error) {
+func (c *csvService) getHeaderDescriptions(details *CSVDetails) (map[string]string, error) {
 	c.logger.Info("Getting Header Descriptions", zap.String("headers", details.FileName))
 
 	genClient, err := provider.NewGeminiProvider(c.ctx)

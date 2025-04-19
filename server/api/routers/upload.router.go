@@ -7,8 +7,8 @@ import (
 	"github.com/OmGuptaIND/shooting-star/api/schema"
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
-	"github.com/OmGuptaIND/shooting-star/pipeline/handlers"
 	"github.com/OmGuptaIND/shooting-star/services"
+	csvservice "github.com/OmGuptaIND/shooting-star/services/csv"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 )
@@ -50,7 +50,7 @@ func (d *UploadRouter) uploadCsv(c fiber.Ctx) error {
 
 	d.logger.Info("Received CSV upload request", zap.String("fileName", req.FileName))
 
-	csvHandler := handlers.NewCSVHandler(d.ctx)
+	csvHandler := csvservice.New(d.ctx)
 	defer csvHandler.Close()
 
 	csvDetails, err := csvHandler.ExtractCSVDetails(req.FilePath)

@@ -49,7 +49,7 @@ func NewChatService(ctx context.Context, documentId string, chatId string) (Chat
 		`)},
 	}
 
-	model.ResponseMIMEType = "application/json"
+	// model.ResponseMIMEType = "application/json"
 
 	// Create a new chat session
 	chatSession := model.StartChat()

@@ -1,4 +1,4 @@
-package handlers
+package csvservice
 
 import "github.com/OmGuptaIND/shooting-star/db/models"
 
