@@ -17,7 +17,7 @@ import GroupChats from "./Group/GroupChats";
 import GroupExtra from "./Group/GroupExtra";
 import Icon from "../Icon";
 import { ArrowRight, X } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AppSidebar() {
@@ -43,7 +43,7 @@ export function AppSidebar() {
 				</div>
 
 				<div className="mb-5">
-					<InfoCard />
+					<InfoCard sidebarOpen={open} />
 					<SidebarSeparator className="my-2" />
 					<GroupExtra open={open} />
 				</div>
@@ -54,7 +54,7 @@ export function AppSidebar() {
 	);
 }
 
-const InfoCard = () => {
+const InfoCard: React.FC<{ sidebarOpen: boolean }> = ({ sidebarOpen }) => {
 	const [open, setOpen] = useState(true);
 
 	if (!open) {
@@ -62,7 +62,12 @@ const InfoCard = () => {
 	}
 
 	return (
-		<div className="border-[2px] border-custom-gray-primary m-2 p-3 rounded-md flex flex-col gap-1 shadow-md">
+		<div
+			className={cn(
+				"border-[2px] border-custom-gray-primary m-2 p-3 rounded-md flex flex-col gap-1 shadow-md",
+				sidebarOpen ? "delay-300 opacity-100" : "opacity-0",
+			)}
+		>
 			<div className="flex items-center justify-between">
 				<div className="text-sm text-custom-text-primary/80 mb-[3px] font-bold font-inter select-none cursor-default">
 					Prism AI

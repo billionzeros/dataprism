@@ -7,6 +7,8 @@ import { Command, PanelRightClose, PanelRightOpen } from "lucide-react";
 import type React from "react";
 import Icon from "../Icon";
 import { cn } from "@/lib/utils"; // Import cn
+import { Tooltip } from "@radix-ui/react-tooltip";
+import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type SidebarHeaderProps = {
 	open: boolean;
@@ -40,19 +42,26 @@ const AppSidebarHeader: React.FC<SidebarHeaderProps> = ({
 						<Icon icon={Command} size={17} />
 					</div>
 					{open && (
-						<span className="translate-y-[1px] text-base font-semibold">
+						<span className="translate-y-[1px] select-none text-base font-semibold">
 							Prism
 						</span>
 					)}
 				</div>
 				{open && (
+					// <Tooltip>
+					// 	<TooltipTrigger>
 					<SidebarMenuButton
-						className="h-8 w-8 hover:bg-sidebar-accent" // Adjust size and hover
+						className="w-fit hover:bg-sidebar-accent p-0"
 						onClick={toggleSidebar}
+						tooltip={{
+							children: "Toggle Sidebar",
+							className: "bg-black text-custom-text-primary",
+							side: "right",
+						}}
 					>
 						<Icon
 							icon={PanelRightOpen}
-							className="size-5 text-sidebar-foreground hover:text-sidebar-accent-foreground" // Adjust size and color
+							className="text-sidebar-foreground hover:text-sidebar-accent-foreground"
 						/>
 						<span className="sr-only">Toggle Sidebar</span>
 					</SidebarMenuButton>
