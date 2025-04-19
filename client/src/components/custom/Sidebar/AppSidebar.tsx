@@ -2,6 +2,9 @@ import {
 	Sidebar,
 	SidebarContent,
 	SidebarHeader,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
 	SidebarRail,
 	SidebarSeparator,
 	useSidebar,
@@ -15,6 +18,7 @@ import GroupExtra from "./Group/GroupExtra";
 import Icon from "../Icon";
 import { ArrowRight, X } from "lucide-react";
 import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AppSidebar() {
 	const { open, toggleSidebar } = useSidebar();
@@ -38,7 +42,7 @@ export function AppSidebar() {
 					</div>
 				</div>
 
-				<div className="mb-20">
+				<div className="mb-5">
 					<InfoCard />
 					<SidebarSeparator className="my-2" />
 					<GroupExtra open={open} />
@@ -73,8 +77,6 @@ const InfoCard = () => {
 					aria-hidden="true"
 					aria-controls="info-card"
 					aria-expanded={open}
-					aria-describedby="info-card"
-					aria-labelledby="info-card"
 				/>
 			</div>
 			<p className="text-xs text-custom-gray-secondary font-inter select-none cursor-default">

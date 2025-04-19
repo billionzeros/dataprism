@@ -44,17 +44,17 @@ const GroupSources = () => {
 		<SidebarMenu>
 			<Collapsible defaultOpen asChild className="group/collapsible">
 				<SidebarMenuItem className="cursor-default">
-					<CollapsibleTrigger
-						asChild
-						className="cursor-pointer flex-1 items-start"
+					<SidebarMenuButton
+						tooltip={{
+							children: "Sources",
+							className: "bg-black text-custom-text-primary",
+							side: "right",
+						}}
+						className="flex select-none items-center justify-between gap-2"
 					>
-						<SidebarMenuButton
-							tooltip={{
-								children: "Sources",
-								className: "bg-black text-custom-text-primary",
-								side: "right",
-							}}
-							className="flex select-none items-center justify-between gap-2"
+						<CollapsibleTrigger
+							asChild
+							className="cursor-pointer flex-1 items-start"
 						>
 							<div className="flex items-center gap-2">
 								<Icon
@@ -67,28 +67,23 @@ const GroupSources = () => {
 									Sources
 								</p>
 							</div>
-
-							<Tooltip>
-								<TooltipTrigger>
-									<div className="p-[3px] hover:scale-110 group hover:bg-custom-gray-secondary/30 duration-100 transition-all select-none rounded-md">
-										<Icon
-											size={16}
-											strokeWidth={2}
-											className="font-bold group-hover:text-white"
-											icon={Plus}
-										/>
-									</div>
-								</TooltipTrigger>
-								<TooltipContent
-									side="right"
-									className="bg-black text-custom-text-primary shadow-md"
-								>
-									<p className="text-xs">Add Source</p>
-									<TooltipArrow className="fill-custom-gray-primary/80 shadow-md" />
-								</TooltipContent>
-							</Tooltip>
-						</SidebarMenuButton>
-					</CollapsibleTrigger>
+						</CollapsibleTrigger>
+						{/* <Tooltip>
+							<TooltipTrigger>
+								<div className="p-[3px] hover:scale-110 group hover:bg-custom-gray-secondary/30 duration-100 transition-all select-none rounded-md">
+									<Icon
+										size={18}
+										strokeWidth={2}
+										className="font-bold group-hover:text-white"
+										icon={Plus}
+									/>
+								</div>
+							</TooltipTrigger>
+							<TooltipContent side="right" className="bg-black shadow-md">
+								<p className="text-xs">Talk to Prism</p>
+							</TooltipContent>
+						</Tooltip> */}
+					</SidebarMenuButton>
 
 					<CollapsibleContent>
 						<SidebarMenuSub>
