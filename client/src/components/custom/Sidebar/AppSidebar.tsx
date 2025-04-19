@@ -15,7 +15,7 @@ import type React from "react";
 import InfoCard from "./InfoCard";
 import BaseMenuItem from "./BaseMenuItem";
 import { Home, LifeBuoy, Settings } from "lucide-react";
-import GroupPages from "./Group/GroupPages";
+import GroupDocuments from "./Group/GroupDocuments";
 import { useRouter } from "next/router";
 
 export function AppSidebar() {
@@ -50,7 +50,7 @@ export function AppSidebar() {
 					</div>
 
 					<div className="px-2 flex items-center w-full flex-col gap-2">
-						{router.pathname.includes("/workspace") ? <GroupPages /> : null}
+						{router.pathname.includes("/workspace") ? <GroupDocuments /> : null}
 						{router.pathname === "/" ? <GroupWorkspace /> : null}
 						<GroupSources />
 						<GroupChats />

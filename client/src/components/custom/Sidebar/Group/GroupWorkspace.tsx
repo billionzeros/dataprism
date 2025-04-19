@@ -14,6 +14,7 @@ import {
 	Folder,
 	FolderKanban,
 	Leaf,
+	Plus,
 	Star,
 	Users,
 } from "lucide-react";
@@ -25,6 +26,11 @@ import {
 import Icon from "../../Icon";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/router";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const items = [
 	{
@@ -106,15 +112,23 @@ const GroupWorkspace = () => {
 										Workspaces
 									</p>
 								</div>
-								<Icon
-									className={cn(
-										!collapseOpen
-											? "-rotate-90 translate-y-[1px] duration-200 transition-all ease-in-out"
-											: "duration-200 translate-y-[1px] ease-in-out",
-									)}
-									size={14}
-									icon={ChevronDown}
-								/>
+								<SidebarMenuSubItem>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<div className="hover:text-custom-text-primary hover:scale-110 duration-150 transition-all ease-in-out hover:bg-custom-gray-secondary/40 rounded-md aspect-video p-[4px]">
+												<Icon
+													className="cursor-pointer"
+													icon={Plus}
+													size={14}
+													strokeWidth={3}
+												/>
+											</div>
+										</TooltipTrigger>
+										<TooltipContent side="right">
+											<span>New Workspace</span>
+										</TooltipContent>
+									</Tooltip>
+								</SidebarMenuSubItem>
 							</div>
 						</CollapsibleTrigger>
 					</SidebarMenuButton>

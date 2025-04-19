@@ -14,6 +14,7 @@ import {
 	ChevronDown,
 	File,
 	Files,
+	Plus,
 } from "lucide-react";
 import {
 	Collapsible,
@@ -23,6 +24,11 @@ import {
 import Icon from "../../Icon";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/router";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const items = [
 	{
@@ -42,7 +48,7 @@ const items = [
 	},
 ];
 
-const GroupPages = () => {
+const GroupDocuments = () => {
 	const router = useRouter();
 
 	const [collapseOpen, setCollapseOpen] = useState(true);
@@ -70,7 +76,7 @@ const GroupPages = () => {
 				<SidebarMenuItem className="cursor-default">
 					<SidebarMenuButton
 						tooltip={{
-							children: "Pages",
+							children: "Documents",
 							className: "bg-black text-custom-text-primary",
 							side: "right",
 						}}
@@ -91,18 +97,26 @@ const GroupPages = () => {
 										icon={Files}
 									/>
 									<p className="text-xs text-left font-semibold translate-y-[1px]">
-										Pages
+										Documents
 									</p>
 								</div>
-								<Icon
-									className={cn(
-										!collapseOpen
-											? "-rotate-90 translate-y-[1px] duration-200 transition-all ease-in-out"
-											: "duration-200 translate-y-[1px] ease-in-out",
-									)}
-									size={14}
-									icon={ChevronDown}
-								/>
+								<SidebarMenuSubItem>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<div className="hover:text-custom-text-primary hover:scale-110 duration-150 transition-all ease-in-out hover:bg-custom-gray-secondary/40 rounded-md aspect-video p-[4px]">
+												<Icon
+													className="cursor-pointer"
+													icon={Plus}
+													size={14}
+													strokeWidth={3}
+												/>
+											</div>
+										</TooltipTrigger>
+										<TooltipContent side="right">
+											<span>New Document</span>
+										</TooltipContent>
+									</Tooltip>
+								</SidebarMenuSubItem>
 							</div>
 						</CollapsibleTrigger>
 					</SidebarMenuButton>
@@ -135,4 +149,4 @@ const GroupPages = () => {
 	);
 };
 
-export default GroupPages;
+export default GroupDocuments;
