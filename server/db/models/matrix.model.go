@@ -12,8 +12,13 @@ type BlockMatrix struct {
     // Primary key for the matrix entry itself
     ID string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 
+	// WorkspaceID is the ID of the workspace to which this block belongs
+	WorkspaceID string `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE"`
+
+	// DocumentID is the ID of the document to which this block belongs
     DocumentID string `gorm:"type:uuid;not null;uniqueIndex:idx_doc_block;index;constraint:OnDelete:CASCADE"`
 
+	// BlockID is the ID of the block in the matrix
     BlockID     string `gorm:"type:uuid;not null;uniqueIndex:idx_doc_block;index;constraint:OnDelete:CASCADE"`
 
     IsRoot       bool    `gorm:"default:false;index"`
@@ -22,7 +27,9 @@ type BlockMatrix struct {
     ParentBlockID *string `gorm:"type:uuid;index;constraint:OnDelete:SET NULL"`
     Level       int     `gorm:"type:int;not null;default:0"`
 
-    CreatedAt time.Time
+	// CreatedAt is the timestamp when the block was created
+    CreatedAt time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	
 
     // Foreign key references BlockID field in this struct to the PK of Block struct
     Block        *Block         `gorm:"foreignKey:BlockID"`

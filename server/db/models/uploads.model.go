@@ -28,11 +28,11 @@ type Upload struct {
 	// ID is the unique identifier for each upload record (UUID v4).
 	ID string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"` // Unique UUID primary key.
 
+	// WorkspaceID is the ID of the workspace to which this upload belongs.
+	WorkspaceID string `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE"` // Foreign key to the workspace.
+
 	// CreatedAt timestamp is automatically set by GORM when the record is first created.
 	CreatedAt time.Time // Automatically managed by GORM.
-
-	// UpdatedAt timestamp is automatically set by GORM when the record is updated.
-	UpdatedAt time.Time // Added field: Automatically managed by GORM.
 
 	// DeletedAt timestamp is used for GORM's soft delete feature.
 	// Records are marked as deleted instead of being permanently removed.
@@ -41,10 +41,11 @@ type Upload struct {
 
 	// SourceType identifies the *kind* of entity the upload represents.
 	// Helps categorize the origin of the uploaded file.
+	// e.g., Document, Block, CSV, PDF, SQL, etc.
 	SourceType UploadType `gorm:"index;type:upload_type;not null"` // Custom enum type, indexed for faster filtering by type.
 
 	// SourceIdentifier identifies the specific *instance* of the SourceType.
-	// Works with SourceType to pinpoint the exact origin item (e.g., Document UUID, Block ID).
+	// Works with SourceType to pinpoint the exact origin item (e.g., WorkspaceUUID, Document UUID, Block ID).
 	// Added index for faster lookups based on the source identifier.
 	SourceIdentifier string `gorm:"index;type:text;not null"` // Identifier for the source, indexed.
 

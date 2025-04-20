@@ -9,6 +9,7 @@ import (
 // Document represents a collection of blocks
 type Document struct {
 	ID        string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	WorkspaceID string    `gorm:"type:uuid;index;constraint:OnDelete:CASCADE" json:"workspaceId"`
 
 	// Document metadata
 	Title     string    `json:"title"`

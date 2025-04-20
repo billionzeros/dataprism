@@ -35,7 +35,7 @@ func RegisterChatRoutes(ctx context.Context, baseRouter fiber.Router) {
 	chatGroup := baseRouter.Group("/chat")
 
 	chatGroup.Post("/new", handler.newChat)
-	chatGroup.Post("/add", handler.addChat) // Create a new document
+	chatGroup.Post("/push", handler.pushChat)
 }
 
 // newChat handles the creation of a new chat.
@@ -68,8 +68,8 @@ func (cr *ChatRouter) newChat(c fiber.Ctx) error {
 	return responses.OK(c, map[string]string{"chatId": newChatId})
 }
 
-// addChat handles the creation of a new document.
-func (cr *ChatRouter) addChat(c fiber.Ctx) error {
+// pushChat handles the pushing of a new user chat message.
+func (cr *ChatRouter) pushChat(c fiber.Ctx) error {
 	req := new(chatservice.ChatMessage)
 
 	if err := c.Bind().Body(&req); err != nil {
@@ -89,17 +89,18 @@ func (cr *ChatRouter) addChat(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Chat service not found")
 	}
 
-	newMessage := &chatservice.ChatMessage{
+	newUserMessage := &chatservice.ChatMessage{
 		DocumentID: req.DocumentID,
 		Message: req.Message,
 		Role: chatservice.UserRole,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 
-	if err := service.AddNewMessage(newMessage); err != nil {
+	assistantResponse, err := service.PushNewChat(newUserMessage); 
+	if err != nil {
 		cr.logger.Error("Error adding new message", zap.Error(err))
 		return responses.BadRequest(c, appError.InternalError, "Failed to add new message")
 	}
 
-	return responses.OK(c, newMessage)
+	return responses.OK(c, assistantResponse)
 }

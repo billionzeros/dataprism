@@ -27,6 +27,9 @@ const (
 type Block struct {
 	ID string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	
+	// Workspace ID to which this block belongs
+	WorkspaceID string `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE"`
+
 	// Document ID to which this block belongs
 	DocumentID string `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE"`
 	
