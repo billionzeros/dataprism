@@ -58,7 +58,7 @@ func (s *service) GetWorkspaceById(id string) (*models.Workspace, error) {
 	s.logger.Info("Fetching workspace by ID", zap.String("id", id))
 
 	var workspace models.Workspace
-	result := db.Conn.First(&workspace, id)
+	result := db.Conn.Where("id = ?", id).First(&workspace)
 	if result.Error != nil {
 		return nil, result.Error
 	}

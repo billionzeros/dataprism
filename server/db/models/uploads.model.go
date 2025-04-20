@@ -49,6 +49,7 @@ type Upload struct {
 	// FileLocation provides the storage path or URL of the uploaded file.
 	FileLocation string `gorm:"type:text;not null"` // Location of the file (e.g., S3 path, local path).
 
+	// WorkspaceID is the ID of the workspace associated with the upload.
 	WorkspaceUploads []WorkspaceUpload `gorm:"foreignKey:UploadID" json:"-"`
 }
 

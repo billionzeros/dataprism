@@ -83,27 +83,25 @@ CREATE INDEX idx_block_matrix_document_id_is_root ON block_matrix(document_id, i
 -- Create uploads table
 CREATE TABLE uploads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    workspace_id UUID NOT NULL, -- Foreign key added below
     source_type TEXT NOT NULL,
     source_identifier TEXT NOT NULL,
     file_location TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
 );
-CREATE INDEX idx_uploads_workspace_id ON uploads(workspace_id); -- Added index for FK
 CREATE INDEX idx_uploads_deleted_at ON uploads(deleted_at);
 CREATE INDEX idx_uploads_source_type ON uploads(source_type);
 CREATE INDEX idx_uploads_source_identifier ON uploads(source_identifier);
 
--- Create Workspace Uploads table
+-- Create Workspace Uploads tablem
 CREATE TABLE workspace_uploads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID NOT NULL,
     upload_id UUID NOT NULL,
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    -- updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Add if needed
 
-    PRIMARY KEY (workspace_id, upload_id),
+    CONSTRAINT uq_workspace_uploads_link UNIQUE (workspace_id, upload_id),
 
     CONSTRAINT fk_workspace_uploads_workspace
         FOREIGN KEY (workspace_id) REFERENCES workspaces(id)
@@ -121,7 +119,6 @@ CREATE INDEX idx_workspace_uploads_upload_id ON workspace_uploads(upload_id);
 ALTER TABLE documents ADD CONSTRAINT fk_documents_workspace FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE;
 ALTER TABLE blocks ADD CONSTRAINT fk_blocks_workspace FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE;
 ALTER TABLE block_matrix ADD CONSTRAINT fk_block_matrix_workspace FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE;
-ALTER TABLE uploads ADD CONSTRAINT fk_uploads_workspace FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE;
 
 -- Document FKs
 ALTER TABLE blocks ADD CONSTRAINT fk_blocks_document FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE;
