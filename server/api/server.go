@@ -68,6 +68,8 @@ func NewApiServer(ctx context.Context) *ApiServer {
 	// Registering routers
 	routers.RegisterDocumentRoutes(ctx, apiV1) // Page Router handles document-related endpoints
 	routers.RegisterUploadRouter(ctx, apiV1) // Upload Router handles upload-related endpoints
+	routers.RegisterWorkspaceRouter(ctx, apiV1) // Workspace Router handles workspace-related endpoints
+	routers.RegisterChatRoutes(ctx, apiV1) // Chat Router handles chat-related endpoints
 
 	// Middleware to handle not found routes, this should be the last middleware in the chain.
 	app.Use(apiServer.notFoundHandler)
