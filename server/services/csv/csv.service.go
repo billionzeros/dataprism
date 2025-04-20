@@ -1,4 +1,4 @@
-package csvservice
+package csvService
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package blockservice
+package blockService
 
 import (
 	"github.com/OmGuptaIND/shooting-star/db"

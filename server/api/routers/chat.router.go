@@ -8,7 +8,7 @@ import (
 	"github.com/OmGuptaIND/shooting-star/api/responses"
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
-	chatservice "github.com/OmGuptaIND/shooting-star/services/chat"
+	chatService "github.com/OmGuptaIND/shooting-star/services/chat"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 )
@@ -18,7 +18,7 @@ type ChatRouter struct {
 	ctx context.Context
 
 	// chatService is the service used for chat-related operations.
-	chatServices map[string]chatservice.ChatService
+	chatServices map[string]chatService.ChatService
 
 	logger *zap.Logger
 }
@@ -27,7 +27,7 @@ type ChatRouter struct {
 func RegisterChatRoutes(ctx context.Context, baseRouter fiber.Router) {
 	handler := &ChatRouter{
 		ctx: ctx,
-		chatServices: make(map[string]chatservice.ChatService),
+		chatServices: make(map[string]chatService.ChatService),
 		logger: logger.FromCtx(ctx),
 	}
 
@@ -40,7 +40,7 @@ func RegisterChatRoutes(ctx context.Context, baseRouter fiber.Router) {
 
 // newChat handles the creation of a new chat.
 func (cr *ChatRouter) newChat(c fiber.Ctx) error {
-	req := new(chatservice.CreateNewChat)
+	req := new(chatService.CreateNewChat)
 
 	if err := c.Bind().Body(&req); err != nil {
 		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
@@ -55,7 +55,7 @@ func (cr *ChatRouter) newChat(c fiber.Ctx) error {
 	newChatId := fmt.Sprintf("%s-%s", req.DocumentID, req.BlockId)
 
 	// Create a new chat service instance
-	service, err := chatservice.NewChatService(cr.ctx, req.DocumentID, newChatId)
+	service, err := chatService.NewChatService(cr.ctx, req.DocumentID, newChatId)
 	if err != nil {
 		cr.logger.Error("Error creating chat service", zap.Error(err))
 		return responses.BadRequest(c, appError.InternalError, "Failed to create chat service")
@@ -70,7 +70,7 @@ func (cr *ChatRouter) newChat(c fiber.Ctx) error {
 
 // pushChat handles the pushing of a new user chat message.
 func (cr *ChatRouter) pushChat(c fiber.Ctx) error {
-	req := new(chatservice.ChatMessage)
+	req := new(chatService.ChatMessage)
 
 	if err := c.Bind().Body(&req); err != nil {
 		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
@@ -89,10 +89,10 @@ func (cr *ChatRouter) pushChat(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Chat service not found")
 	}
 
-	newUserMessage := &chatservice.ChatMessage{
+	newUserMessage := &chatService.ChatMessage{
 		DocumentID: req.DocumentID,
 		Message: req.Message,
-		Role: chatservice.UserRole,
+		Role: chatService.UserRole,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 

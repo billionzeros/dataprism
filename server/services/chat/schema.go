@@ -1,4 +1,4 @@
-package chatservice
+package chatService
 
 type ChatRole string
 

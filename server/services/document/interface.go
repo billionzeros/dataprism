@@ -1,4 +1,4 @@
-package documentservice
+package documentService
 
 import "github.com/OmGuptaIND/shooting-star/db/models"
 

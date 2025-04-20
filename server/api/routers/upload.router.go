@@ -7,8 +7,8 @@ import (
 	"github.com/OmGuptaIND/shooting-star/api/schema"
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
-	"github.com/OmGuptaIND/shooting-star/services"
-	csvservice "github.com/OmGuptaIND/shooting-star/services/csv"
+	csvService "github.com/OmGuptaIND/shooting-star/services/csv"
+	uploadService "github.com/OmGuptaIND/shooting-star/services/upload"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 )
@@ -16,7 +16,7 @@ import (
 // DocumentRouter handles the routing for document-related endpoints.
 type UploadRouter struct {
 	ctx context.Context
-	uploadService services.UploadService
+	uploadService uploadService.UploadService
 	logger *zap.Logger
 }
 
@@ -24,7 +24,7 @@ type UploadRouter struct {
 func RegisterUploadRouter(ctx context.Context, baseRouter fiber.Router) {
 	handler := &UploadRouter{
 		ctx: ctx,
-		uploadService: services.NewUploadService(ctx),
+		uploadService: uploadService.NewUploadService(ctx),
 		logger: logger.FromCtx(ctx),
 	}
 
@@ -50,7 +50,7 @@ func (d *UploadRouter) uploadCsv(c fiber.Ctx) error {
 
 	d.logger.Info("Received CSV upload request", zap.String("fileName", req.FileName))
 
-	csvHandler := csvservice.New(d.ctx)
+	csvHandler := csvService.New(d.ctx)
 	defer csvHandler.Close()
 
 	csvDetails, err := csvHandler.ExtractCSVDetails(req.FilePath)
