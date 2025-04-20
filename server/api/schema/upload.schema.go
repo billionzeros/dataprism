@@ -12,6 +12,9 @@ type UploadCsvRequest struct {
 
 	// Description of the Document being uploaded
 	Description string `json:"description" validate:"required"`
+
+	// WorkspaceID is the ID of the workspace to which the document belongs
+	WorkspaceID string `json:"workspace_id"`
 }
 
 type UploadDocumentResponse struct {

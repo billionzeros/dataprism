@@ -95,6 +95,26 @@ CREATE INDEX idx_uploads_deleted_at ON uploads(deleted_at);
 CREATE INDEX idx_uploads_source_type ON uploads(source_type);
 CREATE INDEX idx_uploads_source_identifier ON uploads(source_identifier);
 
+-- Create Workspace Uploads table
+CREATE TABLE workspace_uploads (
+    workspace_id UUID NOT NULL,
+    upload_id UUID NOT NULL,
+    
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Add if needed
+
+    PRIMARY KEY (workspace_id, upload_id),
+
+    CONSTRAINT fk_workspace_uploads_workspace
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_workspace_uploads_upload
+        FOREIGN KEY (upload_id) REFERENCES uploads(id)
+        ON DELETE CASCADE
+);
+CREATE INDEX idx_workspace_uploads_workspace_id ON workspace_uploads(workspace_id);
+CREATE INDEX idx_workspace_uploads_upload_id ON workspace_uploads(upload_id);
+
 -- Add Foreign Key Constraints AFTER all tables are created
 
 -- Workspace FKs
@@ -142,6 +162,7 @@ DROP TRIGGER IF EXISTS set_documents_timestamp ON documents;
 DROP TRIGGER IF EXISTS set_workspaces_timestamp ON workspaces;
 
 -- Drop tables in reverse order of creation (and dependency)
+DROP TABLE IF EXISTS workspace_uploads;
 DROP TABLE IF EXISTS uploads;
 DROP TABLE IF EXISTS block_matrix;
 DROP TABLE IF EXISTS blocks;

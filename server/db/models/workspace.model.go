@@ -19,6 +19,9 @@ type Workspace struct {
 
 	// Relationships
 	Documents []Document `gorm:"foreignKey:WorkspaceID" json:"documents,omitempty"`
+
+	// Define a relationship to the Uploads table
+	WorkspaceUploads []WorkspaceUpload `gorm:"foreignKey:WorkspaceID" json:"workspace_uploads,omitempty"` // Has many links
 }
 
 func (Workspace) TableName() string {

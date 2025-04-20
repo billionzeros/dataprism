@@ -54,27 +54,50 @@ func (c *csvService) Close() {
 }
 
 // UploadCSV uploads the CSV file to the server and processes it.
-func (c *csvService) UploadCSV(details *CSVDetails) (*models.Upload, error) {
-	c.logger.Info("Uploading CSV file", zap.String("fileName", details.FileName))
+func (c *csvService) UploadCSV(workspace *models.Workspace, fileDetails *CSVDetails) (*models.Upload, error) {
+	c.logger.Info("Uploading CSV file", zap.String("fileName", fileDetails.FileName))
 
-	file := &models.Upload{
+	upload := &models.Upload{
 		SourceType: models.UploadTypeCSV,
-		SourceIdentifier: details.FileName,
-		FileLocation: details.FilePath,
-	}
+		SourceIdentifier: fileDetails.FileName,
+		FileLocation: fileDetails.FilePath,
 
-	if err := db.Conn.Create(&file).Error; err != nil {
+	}
+	tx := db.Conn.Begin()
+	if tx.Error != nil {
+        c.logger.Error("Error starting transaction", zap.Error(tx.Error))
+        return nil, appError.New(appError.InternalError, "failed to start database transaction", tx.Error)
+    }
+
+	if err := tx.Create(&upload).Error; err != nil {
 		c.logger.Error("Error creating upload record", zap.Error(err))
-		return nil, appError.New(appError.InternalError, "failed to create upload record", err)
+		return nil, appError.New(appError.InternalError, err.Error(), err)
 	}
 
-	c.logger.Info("CSV file uploaded successfully", zap.String("FileName", details.FileName))
-	return file, nil
+	workspaceUploadLink := &models.WorkspaceUpload{
+        WorkspaceID:     workspace.ID,
+        UploadID:        upload.ID,
+    }
+
+	if err := tx.Create(&workspaceUploadLink).Error; err != nil {
+        tx.Rollback()
+        c.logger.Error("Error creating workspace-upload link", zap.Error(err))
+        return nil, appError.New(appError.InternalError, err.Error(), err)
+    }
+
+	if err := tx.Commit().Error; err != nil {
+        c.logger.Error("Error committing transaction", zap.Error(err))
+        tx.Rollback()
+        return nil, appError.New(appError.InternalError, "failed to commit transaction", err)
+    }
+
+	c.logger.Info("CSV file uploaded successfully", zap.String("FileName", fileDetails.FileName))
+	return upload, nil
 } 
 
 // ProcessAndEmbedCSV processes the CSV file and embeds it.
-func (c *csvService) ProcessAndEmbedCSV(details *CSVDetails) (error) {
-	c.logger.Info("Processing CSV file", zap.String("FileName", details.FileName))
+func (c *csvService) ProcessAndEmbedCSV(fileDetails *CSVDetails) (error) {
+	c.logger.Info("Processing CSV file", zap.String("FileName", fileDetails.FileName))
 
 	genClient, err := provider.NewGeminiProvider(c.ctx)
 	if err != nil {
@@ -86,11 +109,11 @@ func (c *csvService) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 
 	// Create a new batch for embedding, which will be used to store the content
 	b := em.NewBatch()
-	embeddedContents := make([]string, 0, len(details.Headers))
-	for _, column := range details.Headers {
-		title := fmt.Sprintf("CSV: %s, Column: %s", details.FileName, column)
+	embeddedContents := make([]string, 0, len(fileDetails.Headers))
+	for _, column := range fileDetails.Headers {
+		title := fmt.Sprintf("CSV: %s, Column: %s", fileDetails.FileName, column)
 
-		desc, ok := details.HeadersDescription[column]
+		desc, ok := fileDetails.HeadersDescription[column]
 		if !ok {
 			desc = "No description available"
 		}
@@ -107,16 +130,16 @@ func (c *csvService) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 		return appError.New(appError.InternalError, err.Error(), err)
 	}
 
-	c.logger.Info("CSV file processed and embedding created", zap.String("fileName", details.FileName))
+	c.logger.Info("CSV file processed and embedding created", zap.String("fileName", fileDetails.FileName))
 
 	vectorEmbeddings := make([]*models.VectorEmbedding, 0, len(res.Embeddings))
 
 	for i, e := range res.Embeddings {
 		vectorEmbedding := &models.VectorEmbedding{
 			SourceType: models.EmbeddingSourceTypeCSVColumn,
-			RelatedID: details.UploadInfo.ID,
-			SourceIdentifier: details.FileName,
-			ColumnOrChunkName: details.Headers[i],
+			RelatedID: fileDetails.UploadInfo.ID,
+			SourceIdentifier: fileDetails.FileName,
+			ColumnOrChunkName: fileDetails.Headers[i],
 			OriginalText: embeddedContents[i],
 			Embedding: e.Values,
 		}
@@ -128,7 +151,7 @@ func (c *csvService) ProcessAndEmbedCSV(details *CSVDetails) (error) {
 		return appError.New(appError.InternalError, err.Error(), err)
 	}
 
-	c.logger.Info("CSV file processed and stored successfully", zap.String("fileName", details.FileName))
+	c.logger.Info("CSV file processed and stored successfully", zap.String("fileName", fileDetails.FileName))
 
 	return nil
 }

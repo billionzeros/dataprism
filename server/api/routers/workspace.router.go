@@ -32,8 +32,71 @@ func RegisterWorkspaceRouter(ctx context.Context, baseRouter fiber.Router) {
 	group := baseRouter.Group("/workspace")
 
 	group.Post("/create", handler.createWorkspace) // Upload a CSV file
+	group.Get("/name/:name", handler.getWorkspaceByName) // Get workspace by name
+	group.Get("/id/:id", handler.getWorkspaceById) // Get workspace by ID
+	group.Get("/all", handler.getAllWorkspaces) // Get all workspaces
 }
 
+func (r *router) getAllWorkspaces(c fiber.Ctx) error {	
+	workspaces, err := r.workspaceService.GetAllWorkspaces()
+	if err != nil {
+		r.logger.Error("Error retrieving workspaces", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Failed to retrieve workspaces")
+	}
+
+	response := &schema.GetAllWorkspacesResponse{
+		Workspaces: workspaces,
+	}
+
+	return responses.OK(c, response)
+}
+
+// getWorkspaceById handles the retrieval of a workspace by its ID.
+func (r *router) getWorkspaceById(c fiber.Ctx) error {
+	req := new(schema.GetWorkspaceByIdRequest)
+
+	if err := c.Bind().Body(&req); err != nil {
+		r.logger.Error("Error binding request body", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
+	}
+
+	workspace, err := r.workspaceService.GetWorkspaceById(req.WorkspaceId)
+	if err != nil {
+		r.logger.Error("Error retrieving workspace", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Failed to retrieve workspace")
+	}
+
+	response := &schema.GetWorkspaceByIdResponse{
+		WorkspaceId: workspace.ID,
+		Workspace: workspace,
+	}
+
+	return responses.OK(c, response)
+}
+
+// getWorkspaceByName handles the retrieval of a workspace by its name.
+func (r *router) getWorkspaceByName(c fiber.Ctx) error {
+	req := new(schema.GetWorkspaceByNameRequest)
+
+	if err := c.Bind().Body(&req); err != nil {
+		r.logger.Error("Error binding request body", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
+	}
+
+	workspace, err := r.workspaceService.GetWorkspaceById(req.Name)
+	if err != nil {
+		r.logger.Error("Error retrieving workspace", zap.Error(err))
+		return responses.BadRequest(c, appError.InternalError, "Failed to retrieve workspace")
+	}
+
+	response := &schema.GetWorkspaceByNameResponse{
+		Workspace: workspace,
+	}
+
+	return responses.OK(c, response)
+}
+
+// CreateWorkspace handles the creation of a new workspace.
 func (r *router) createWorkspace(c fiber.Ctx) error {
 	req := new(schema.CreateWorkspaceRequest)
 

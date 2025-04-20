@@ -28,9 +28,6 @@ type Upload struct {
 	// ID is the unique identifier for each upload record (UUID v4).
 	ID string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"` // Unique UUID primary key.
 
-	// WorkspaceID is the ID of the workspace to which this upload belongs.
-	WorkspaceID string `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE"` // Foreign key to the workspace.
-
 	// CreatedAt timestamp is automatically set by GORM when the record is first created.
 	CreatedAt time.Time // Automatically managed by GORM.
 
@@ -51,6 +48,8 @@ type Upload struct {
 
 	// FileLocation provides the storage path or URL of the uploaded file.
 	FileLocation string `gorm:"type:text;not null"` // Location of the file (e.g., S3 path, local path).
+
+	WorkspaceUploads []WorkspaceUpload `gorm:"foreignKey:UploadID" json:"-"`
 }
 
 // TableName specifies the database table name for the Uploads model.
