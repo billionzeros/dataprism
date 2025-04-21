@@ -92,5 +92,10 @@ func (d *UploadRouter) uploadCsv(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Failed to process CSV file")
 	}
 
-	return responses.OK(c, "CSV file Processed Successfully")
+	response := &schema.UploadCsvResponse{
+		UploadId: uploadInfo.ID,
+		Upload: uploadInfo,
+	}
+
+	return responses.OK(c, response)
 }

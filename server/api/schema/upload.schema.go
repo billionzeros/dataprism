@@ -1,5 +1,8 @@
 package schema
 
+import "github.com/OmGuptaIND/shooting-star/db/models"
+
+
 type DocumentType string
 
 // ---- UploadDocument ---
@@ -17,10 +20,10 @@ type UploadCsvRequest struct {
 	WorkspaceID string `json:"workspace_id"`
 }
 
-type UploadDocumentResponse struct {
-	// VectorID is the ID of the vector created in the database
-	VectorID string `json:"vector_id"`
+type UploadCsvResponse struct {
+	// UploadId is the ID of the upload
+	UploadId string `json:"upload_id"`
 
-	// TokenUsed is the number of tokens used for the Document Processing
-	TokenUsed int64 `json:"token_used"`
+	// Details of the upload
+	*models.Upload
 }

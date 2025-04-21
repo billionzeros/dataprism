@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/OmGuptaIND/shooting-star/appError"
+	"github.com/OmGuptaIND/shooting-star/cloud"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/OmGuptaIND/shooting-star/db"
 	"github.com/OmGuptaIND/shooting-star/db/models"
@@ -57,12 +58,24 @@ func (c *csvService) Close() {
 func (c *csvService) UploadCSV(workspace *models.Workspace, fileDetails *CSVDetails) (*models.Upload, error) {
 	c.logger.Info("Uploading CSV file", zap.String("fileName", fileDetails.FileName))
 
+	awsClient, err := cloud.NewAwsClient(c.ctx)
+	if err != nil {
+		c.logger.Error("Error creating AWS client", zap.Error(err))
+		return nil, appError.New(appError.InternalError, "failed to create AWS client", err)
+	}
+
+	uploadOutput, err := awsClient.UploadFile(&fileDetails.FileName, fileDetails.FilePath)
+	if err != nil {
+		c.logger.Error("Error uploading file to AWS", zap.Error(err))
+		return nil, appError.New(appError.InternalError, "failed to upload file to AWS", err)
+	}
+
 	upload := &models.Upload{
 		SourceType: models.UploadTypeCSV,
 		SourceIdentifier: fileDetails.FileName,
-		FileLocation: fileDetails.FilePath,
-
+		FileLocation: uploadOutput.Location,
 	}
+	
 	tx := db.Conn.Begin()
 	if tx.Error != nil {
         c.logger.Error("Error starting transaction", zap.Error(tx.Error))
@@ -137,8 +150,7 @@ func (c *csvService) ProcessAndEmbedCSV(fileDetails *CSVDetails) (error) {
 	for i, e := range res.Embeddings {
 		vectorEmbedding := &models.VectorEmbedding{
 			SourceType: models.EmbeddingSourceTypeCSVColumn,
-			RelatedID: fileDetails.UploadInfo.ID,
-			SourceIdentifier: fileDetails.FileName,
+			SourceIdentifier: fileDetails.UploadInfo.ID,
 			ColumnOrChunkName: fileDetails.Headers[i],
 			OriginalText: embeddedContents[i],
 			Embedding: e.Values,

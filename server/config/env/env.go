@@ -23,6 +23,14 @@ type Env struct {
 
 	// Database Creds
 	DATABASE_URL string `mapstructure:"DATABASE_URL"`
+
+	// AWS CREDS
+	AWS_BUCKET_ENDPOINT string `mapstructure:"AWS_BUCKET_ENDPOINT"`
+	AWS_BUCKET_ID	   string `mapstructure:"AWS_BUCKET_ID"`
+	AWS_KEY_ID		string `mapstructure:"AWS_KEY_ID"`
+	AWS_SECRET_KEY	 string `mapstructure:"AWS_SECRET_KEY"`
+	AWS_BUCKET_NAME	 string `mapstructure:"AWS_BUCKET_NAME"`
+	AWS_BUCKET_REGION string `mapstructure:"AWS_BUCKET_REGION"`
 }
 
 // LoadEnvironmentVariables loads environment variables
@@ -81,4 +89,24 @@ func GetDatabaseURL() string {
 
 func GetListenAddr() string {
 	return viper.GetString("LISTEN_ADDR")
+}
+
+type AWSBucketCreds struct {
+	AWSBucketEndpoint string
+	AWSBucketID       string
+	AWSKeyID         string
+	AWSSecretKey     string
+	AWSBucketName    string
+	AWSBucketRegion  string
+}
+
+func GetAWSBucketCreds() *AWSBucketCreds {
+	return &AWSBucketCreds{
+		AWSBucketEndpoint: viper.GetString("AWS_BUCKET_ENDPOINT"),
+		AWSBucketID:       viper.GetString("AWS_BUCKET_ID"),
+		AWSKeyID:         viper.GetString("AWS_KEY_ID"),
+		AWSSecretKey:     viper.GetString("AWS_SECRET_KEY"),
+		AWSBucketName:    viper.GetString("AWS_BUCKET_NAME"),
+		AWSBucketRegion:  viper.GetString("AWS_BUCKET_REGION"),
+	}
 }

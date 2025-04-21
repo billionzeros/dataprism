@@ -25,6 +25,9 @@ const (
 	// Gemini 1.5 Pro Latest
 	Gemini1_5ProLatest GeminiModels = "gemini-1.5-pro-latest"
 
+	// Gemini 2.5 Pro Latest
+	Gemini2_5Pro GeminiModels = "gemini-2.5-pro-preview-03-25"
+
 	// Gemini 2.0 Flash
 	Gemini2_0Flash GeminiModels = "gemini-2.0-flash"
 )

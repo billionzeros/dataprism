@@ -46,26 +46,30 @@ func (cr *ChatRouter) newChat(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
 	}
 
-	if req.DocumentID == "" || req.BlockId == "" {
-		return responses.BadRequest(c, appError.InternalError, "Document ID and block ID are required")
+	if req.WorkspaceId == ""  || req.BlockId == "" {
+		cr.logger.Error("Invalid request parameters", zap.String("workspaceId", req.WorkspaceId))
+		return responses.BadRequest(c, appError.InternalError, "Workspace ID and BlockId is required")
 	}
 
-	cr.logger.Info("Received new chat request", zap.String("documentID", req.DocumentID), zap.String("blockId", req.BlockId))
+	cr.logger.Info("Received new chat request", zap.String("WorkspaceId", req.WorkspaceId))
 
-	newChatId := fmt.Sprintf("%s-%s", req.DocumentID, req.BlockId)
+	chatId := fmt.Sprintf("%s-%s", req.WorkspaceId, req.BlockId)
+	if _, exists := cr.chatServices[chatId]; exists {
+		cr.logger.Error("Chat service already exists", zap.String("chatId", chatId))
+		return responses.OK(c, map[string]string{"chatId": chatId})
+	}
 
-	// Create a new chat service instance
-	service, err := chatService.NewChatService(cr.ctx, req.DocumentID, newChatId)
+	service, err := chatService.NewChatService(cr.ctx, req.WorkspaceId)
 	if err != nil {
 		cr.logger.Error("Error creating chat service", zap.Error(err))
 		return responses.BadRequest(c, appError.InternalError, "Failed to create chat service")
 	}
 
 	// Store the chat service instance in the map
-	cr.chatServices[newChatId] = service
-	cr.logger.Info("Chat service created successfully", zap.String("chatId", newChatId))
+	cr.chatServices[chatId] = service
+	cr.logger.Info("Chat service created successfully", zap.String("chatId", chatId))
 
-	return responses.OK(c, map[string]string{"chatId": newChatId})
+	return responses.OK(c, map[string]string{"chatId": chatId})
 }
 
 // pushChat handles the pushing of a new user chat message.
@@ -76,21 +80,20 @@ func (cr *ChatRouter) pushChat(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "Invalid request body")
 	}
 
-	if req.DocumentID == "" || req.Message == "" {
-		cr.logger.Error("Invalid request parameters", zap.String("documentID", req.DocumentID), zap.String("message", req.Message))
-		return responses.BadRequest(c, appError.InternalError, "Document ID and message are required")
+	if req.ChatId == "" {
+		return responses.BadRequest(c, appError.InternalError, "ChatId is required")
 	}
 
-	cr.logger.Info("Received document creation request", zap.String("documentID", req.DocumentID), zap.String("message", req.Message))
+	cr.logger.Info("Received document creation request", zap.String("documentID", req.ChatId))
 
-	service, ok := cr.chatServices[req.DocumentID]
+	service, ok := cr.chatServices[req.ChatId]
 	if !ok {
-		cr.logger.Error("Chat service not found", zap.String("documentID", req.DocumentID))
+		cr.logger.Error("Chat service not found", zap.String("ChatId", req.ChatId))
 		return responses.BadRequest(c, appError.InternalError, "Chat service not found")
 	}
 
 	newUserMessage := &chatService.ChatMessage{
-		DocumentID: req.DocumentID,
+		ChatId: req.ChatId,
 		Message: req.Message,
 		Role: chatService.UserRole,
 		Timestamp: time.Now().Format(time.RFC3339),

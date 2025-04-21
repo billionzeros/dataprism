@@ -18,20 +18,20 @@ const (
 
 // CreateNewChat represents the request to create a new chat.
 type CreateNewChat struct {
-	// DocumentID is the unique identifier for the document.
-	DocumentID string `json:"document_id"`
+	// WorkspaceId is the ID of the workspace associated with the chat.
+	WorkspaceId string `json:"workspace_id"`
 
-	// BlockId is the unique identifier for the block.
+	// BlockId is the ID of the block associated with the chat.
 	BlockId string `json:"block_id"`
 }
 
 // ChatMessage represents a message in the chat.
 type ChatMessage struct {
-	// DocumentID is the unique identifier for the document.
-	DocumentID string `json:"document_id"`
+	// ChatId is the unique identifier for the Message ( which contains all the user queries.)
+	ChatId string `json:"chat_id"`
 
-	// Message is the unique identifier for the Message ( which contains all the user queries.)
-	MessageId string `json:"chat_id"`
+	// MessageId is the unique identifier for the message.
+	MessageId string `json:"message_id"`
 
 	// Message is the content of the chat message.
 	Message string `json:"message"`
