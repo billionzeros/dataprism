@@ -4,12 +4,12 @@ go 1.23.0
 
 toolchain go1.23.7
 
-require go.uber.org/zap v1.27.0
-
 require (
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/panjf2000/ants/v2 v2.11.3 // indirect
+	github.com/panjf2000/ants/v2 v2.11.3
+	go.uber.org/zap v1.27.0
 )
+
+require github.com/jmespath/go-jmespath v0.4.0 // indirect
 
 require (
 	cloud.google.com/go v0.116.0 // indirect
