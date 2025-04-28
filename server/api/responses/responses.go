@@ -19,7 +19,7 @@ type APIError struct {
     Message string `json:"message"`
 }
 
-// OK returns a successful response with data
+// OK returns a successful `200`` response with data
 func OK(c fiber.Ctx, data interface{}) error {
     return c.Status(http.StatusOK).JSON(APIResponse{
         Success: true,
@@ -27,7 +27,17 @@ func OK(c fiber.Ctx, data interface{}) error {
     })
 }
 
-// Created returns a successful creation response
+// Accepted returns a `202`` accepted response
+func Accepted(c fiber.Ctx, data interface{}) error {
+    return c.Status(http.StatusAccepted).JSON(APIResponse{
+        Success: true,
+        Data:    data,
+    })
+}
+
+
+
+// Created returns a successful creation `201` response
 func Created(c fiber.Ctx, data interface{}) error {
     return c.Status(http.StatusCreated).JSON(APIResponse{
         Success: true,
@@ -35,7 +45,15 @@ func Created(c fiber.Ctx, data interface{}) error {
     })
 }
 
-// BadRequest returns a 400 bad request error
+// StatusMultiStatus returns a `207` multi-status response, meaning some submissions failed
+func StatusMultiStatus(c fiber.Ctx, data interface{}) error {
+    return c.Status(http.StatusMultiStatus).JSON(APIResponse{
+        Success: true,
+        Data:    data,
+    })
+}
+
+// BadRequest returns a `400` bad request error
 func BadRequest(c fiber.Ctx, code int, message string) error {
     return c.Status(http.StatusBadRequest).JSON(APIResponse{
         Success: false,

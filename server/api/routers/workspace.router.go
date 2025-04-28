@@ -14,7 +14,7 @@ import (
 )
 
 // DocumentRouter handles the routing for document-related endpoints.
-type router struct {
+type WorkspaceRouter struct {
 	ctx context.Context
 	workspaceService service.WorkspaceService
 	logger *zap.Logger
@@ -22,7 +22,7 @@ type router struct {
 
 // NewDocumentRouter creates a new DocumentRouter instance with the provided fiber.Router.
 func RegisterWorkspaceRouter(ctx context.Context, baseRouter fiber.Router) {
-	handler := &router{
+	handler := &WorkspaceRouter{
 		ctx: ctx,
 		workspaceService: service.New(ctx),
 		logger: logger.FromCtx(ctx),
@@ -37,7 +37,7 @@ func RegisterWorkspaceRouter(ctx context.Context, baseRouter fiber.Router) {
 	group.Get("/all", handler.getAllWorkspaces) // Get all workspaces
 }
 
-func (r *router) getAllWorkspaces(c fiber.Ctx) error {	
+func (r *WorkspaceRouter) getAllWorkspaces(c fiber.Ctx) error {	
 	workspaces, err := r.workspaceService.GetAllWorkspaces()
 	if err != nil {
 		r.logger.Error("Error retrieving workspaces", zap.Error(err))
@@ -52,7 +52,7 @@ func (r *router) getAllWorkspaces(c fiber.Ctx) error {
 }
 
 // getWorkspaceById handles the retrieval of a workspace by its ID.
-func (r *router) getWorkspaceById(c fiber.Ctx) error {
+func (r *WorkspaceRouter) getWorkspaceById(c fiber.Ctx) error {
 	req := new(schema.GetWorkspaceByIdRequest)
 
 	if err := c.Bind().Body(&req); err != nil {
@@ -75,7 +75,7 @@ func (r *router) getWorkspaceById(c fiber.Ctx) error {
 }
 
 // getWorkspaceByName handles the retrieval of a workspace by its name.
-func (r *router) getWorkspaceByName(c fiber.Ctx) error {
+func (r *WorkspaceRouter) getWorkspaceByName(c fiber.Ctx) error {
 	req := new(schema.GetWorkspaceByNameRequest)
 
 	if err := c.Bind().Body(&req); err != nil {
@@ -97,7 +97,7 @@ func (r *router) getWorkspaceByName(c fiber.Ctx) error {
 }
 
 // CreateWorkspace handles the creation of a new workspace.
-func (r *router) createWorkspace(c fiber.Ctx) error {
+func (r *WorkspaceRouter) createWorkspace(c fiber.Ctx) error {
 	req := new(schema.CreateWorkspaceRequest)
 
 	if err := c.Bind().Body(&req); err != nil {

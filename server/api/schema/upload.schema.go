@@ -1,7 +1,5 @@
 package schema
 
-import "github.com/OmGuptaIND/shooting-star/db/models"
-
 
 type DocumentType string
 
@@ -22,8 +20,5 @@ type UploadCsvRequest struct {
 
 type UploadCsvResponse struct {
 	// UploadId is the ID of the upload
-	UploadId string `json:"upload_id"`
-
-	// Details of the upload
-	*models.Upload
+	Message string `json:"message"`
 }

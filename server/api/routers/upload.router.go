@@ -7,9 +7,7 @@ import (
 	"github.com/OmGuptaIND/shooting-star/api/schema"
 	"github.com/OmGuptaIND/shooting-star/appError"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
-	csvService "github.com/OmGuptaIND/shooting-star/services/csv"
 	uploadService "github.com/OmGuptaIND/shooting-star/services/upload"
-	workspaceService "github.com/OmGuptaIND/shooting-star/services/workspace"
 	"github.com/gofiber/fiber/v3"
 	"go.uber.org/zap"
 )
@@ -17,7 +15,6 @@ import (
 // DocumentRouter handles the routing for document-related endpoints.
 type UploadRouter struct {
 	ctx context.Context
-	uploadService uploadService.UploadService
 	logger *zap.Logger
 }
 
@@ -25,7 +22,6 @@ type UploadRouter struct {
 func RegisterUploadRouter(ctx context.Context, baseRouter fiber.Router) {
 	handler := &UploadRouter{
 		ctx: ctx,
-		uploadService: uploadService.NewUploadService(ctx),
 		logger: logger.FromCtx(ctx),
 	}
 
@@ -49,53 +45,21 @@ func (d *UploadRouter) uploadCsv(c fiber.Ctx) error {
 		return responses.BadRequest(c, appError.InternalError, "File name and file path are required")
 	}
 
-	// Validate Workspace ID
-	workspaceService := workspaceService.New(d.ctx)
-	defer workspaceService.Close()
-
-	workspaceId := req.WorkspaceID
-	if workspaceId == "" {
-		d.logger.Error("Invalid request parameters", zap.String("workspaceId", workspaceId))
-		return responses.BadRequest(c, appError.InternalError, "Workspace ID is required")
-	}
-
-	workSpaceDetails, err := workspaceService.GetWorkspaceById(req.WorkspaceID)
-	if err != nil {
-		d.logger.Error("Error fetching workspace details", zap.Error(err))
-		return responses.BadRequest(c, appError.InternalError, "Failed to fetch workspace details")
-	}
-
-	d.logger.Info("Received CSV upload request", zap.String("fileName", req.FileName))
-
-
-	csvHandler := csvService.New(d.ctx)
-	defer csvHandler.Close()
-
-	csvDetails, err := csvHandler.ExtractCSVDetails(req.FilePath)
-	if err != nil {
-		d.logger.Error("Error extracting CSV details", zap.Error(err))
-		return responses.BadRequest(c, appError.InternalError, "Failed to extract CSV details")
-	}
-
-	uploadInfo, err := csvHandler.UploadCSV(workSpaceDetails, csvDetails)
+	err := uploadService.Service.QueueCsvUpload(&uploadService.QueueCsvDetails{
+		WorkspaceID: req.WorkspaceID,
+		FileName:   req.FileName,
+		FilePath:  req.FilePath,
+		Description: req.Description,
+	})
 	if err != nil {
 		d.logger.Error("Error uploading CSV file", zap.Error(err))
-		return responses.BadRequest(c, appError.InternalError, "Failed to upload CSV file")
+		return responses.BadRequest(c, appError.InternalError, err.Error())
 	}
 
-	// Set the upload information in the CSV details
-	csvDetails.UploadInfo = uploadInfo
-
-	err = csvHandler.ProcessAndEmbedCSV(csvDetails)
-	if err != nil {
-		d.logger.Error("Error processing CSV file", zap.Error(err))
-		return responses.BadRequest(c, appError.InternalError, "Failed to process CSV file")
-	}
 
 	response := &schema.UploadCsvResponse{
-		UploadId: uploadInfo.ID,
-		Upload: uploadInfo,
+		Message: "CSV file Queued for processing",
 	}
 
-	return responses.OK(c, response)
+	return responses.Accepted(c, response)
 }

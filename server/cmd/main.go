@@ -12,6 +12,7 @@ import (
 	"github.com/OmGuptaIND/shooting-star/config/env"
 	"github.com/OmGuptaIND/shooting-star/config/logger"
 	"github.com/OmGuptaIND/shooting-star/db"
+	uploadService "github.com/OmGuptaIND/shooting-star/services/upload"
 	"go.uber.org/zap"
 )
 
@@ -50,9 +51,12 @@ func main() {
 		panic(err)
 	}
 
+	// Create Required Services.
+	uploadService := uploadService.New(ctx) // Upload service instance
+	defer uploadService.Close()
+	
 	// Create and start the API server
 	server := api.NewApiServer(ctx)
-	
 
 	// Setup Context cancellation and signal handling
 	sigChan := make(chan os.Signal, 1)
