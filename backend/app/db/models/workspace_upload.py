@@ -29,7 +29,7 @@ class WorkspaceUpload(Base):
 
     # Primary key for the association entry itself
     id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+        PG_UUID(as_uuid=True), default=uuid.uuid4
     )
 
     # Foreign Key to Workspace

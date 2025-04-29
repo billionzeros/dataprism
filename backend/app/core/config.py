@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     # --- Run Time ---
     environment: str = Field(default="development", alias="ENVIRONMENT")
     log_level: str = Field(default="info", alias="LOG_LEVEL")
+    host: str = Field(default="127.0.0.1", alias="HOST")
+    port: int = Field(default=8080, alias="PORT")
 
     # --- API Credentials ---
     gemini_api_key: str = Field(alias="GEMINI_API_KEY")

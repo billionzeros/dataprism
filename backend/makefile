@@ -1,14 +1,19 @@
 # Variables
-PYTHON_MAIN = app.main
+PYTHON_RUN_SCRIPT = run.py
 VENV_DIR ?= .venv
+PYTHON_FILES = app/
+
+# Default Target
+all: run
 
 install:
 	@echo ">>> Installing dependencies using uv..."
 	@uv pip sync pyproject.toml
+	@echo ">>> Setup complete. Dependencies installed."
 
 run:
 	@echo ">>> Running application: $(PYTHON_MAIN)"
-	@uv run python -m $(PYTHON_MAIN)
+	@uv run python $(PYTHON_RUN_SCRIPT)
 
 ## Lint code using Ruff
 lint: 
@@ -32,4 +37,4 @@ clean:
 	@find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 
-.PHONY: install run lint format check clean
+.PHONY: all install run lint format check clean
