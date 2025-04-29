@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     # --- Run Time ---
     environment: str = Field(default="development", alias="ENVIRONMENT")
+    log_level: str = Field(default="info", alias="LOG_LEVEL")
 
     # --- API Credentials ---
     gemini_api_key: str = Field(alias="GEMINI_API_KEY")
@@ -16,6 +17,7 @@ class Settings(BaseSettings):
     database_url: PostgresDsn = Field(alias="DATABASE_URL")
 
     # --- Axiom Logging ---
+    enable_axiom: bool = Field(default=False, alias="ENABLE_AXIOM")
     axiom_org_id: str = Field(alias="AXIOM_ORG_ID")
     axiom_dataset: str = Field(alias="AXIOM_DATASET")
     axiom_token: str = Field(alias="AXIOM_TOKEN")
