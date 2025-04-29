@@ -1,13 +1,12 @@
 import logging
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 try:
-    engine = create_engine(
+    async_engine = create_async_engine(
         str(settings.database_url), 
         pool_pre_ping=True,
         max_overflow=settings.db_max_overflow,
@@ -17,10 +16,12 @@ try:
     )
 
     # Session is used to interact with the database
-    SessionLocal = sessionmaker(
+    SessionLocal = async_sessionmaker(
+        bind=async_engine,
+        class_=AsyncSession,
         autocommit=False, 
         autoflush=False, 
-        bind=engine
+        expire_on_commit=False,
     )
 
     logger.info("Database engine created successfully.")
