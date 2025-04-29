@@ -37,6 +37,10 @@ class Block(Base):
     """
     __tablename__ = "blocks"
 
+    # Primary key for the block
+    id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
 
     # Foreign Key to Workspace
     # Adjust 'workspaces.id' if your workspace table/column names differ

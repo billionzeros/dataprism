@@ -36,6 +36,7 @@ class Upload(Base):
         Index('ix_upload_source', 'source_type', 'source_identifier'),
     )
 
+    # Primary key for the upload
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
@@ -59,7 +60,7 @@ class Upload(Base):
 
     # --- Relationships ---
     # One-to-Many relationship with the association table WorkspaceUpload
-    workspace_links: Mapped[List[WorkspaceUpload]] = relationship(
+    workspace_links: Mapped[List["WorkspaceUpload"]] = relationship(
         "WorkspaceUpload", back_populates="upload", cascade="all, delete-orphan"
     )
 

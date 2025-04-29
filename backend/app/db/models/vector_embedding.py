@@ -14,7 +14,6 @@ from sqlalchemy.dialects.postgresql import ENUM as PG_Enum
 from app.db.base_class import Base
 from pgvector.sqlalchemy import Vector
 
-# 1. Define Enum for EmbeddingSourceType
 class EmbeddingSourceType(str, enum.Enum):
     DOCUMENT = "document"
     BLOCK = "block"
@@ -25,7 +24,6 @@ class EmbeddingSourceType(str, enum.Enum):
     USER_MEMORY = "user_memory"
     UNKNOWN = "unknown"
 
-# 2. Define the VectorEmbedding Model
 class VectorEmbedding(Base):
     """
     Stores vector embeddings generated from various sources.
@@ -34,12 +32,12 @@ class VectorEmbedding(Base):
     """
     __tablename__ = "vector_embeddings"
 
-    # Optional: Add indexes for potential filtering/lookup
     __table_args__ = (
         Index('ix_vector_embedding_source', 'source_type', 'source_identifier'),
         # Index('ix_vector_embedding_related', 'related_id'), # If frequently queried
     )
 
+    # Primary key for the vector embedding
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
@@ -53,11 +51,9 @@ class VectorEmbedding(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
 
-    # Source Information
-    # Option 1: Store Enum as VARCHAR (more portable)
     source_type: Mapped[EmbeddingSourceType] = mapped_column(
-         PG_Enum(EmbeddingSourceType, name="embedding_source_type_enum", create_type=False), # create_type=False stores as VARCHAR
-         nullable=False, index=True
+        PG_Enum(EmbeddingSourceType, name="embedding_source_type_enum", create_type=False), # create_type=False stores as VARCHAR
+        nullable=False, index=True
     )
     # Option 2: Store Enum as native PostgreSQL ENUM (less portable, requires DB setup)
     # source_type: Mapped[EmbeddingSourceType] = mapped_column(
@@ -71,13 +67,7 @@ class VectorEmbedding(Base):
     original_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True) # Store original text if possible
 
     # Embedding Vector
-    # Requires sqlalchemy-pgvector and the vector extension in PostgreSQL
-    # Replace 768 with your actual embedding dimension
     embedding: Mapped[List[float]] = mapped_column(Vector(768), nullable=False)
 
     def __repr__(self):
         return f"<VectorEmbedding(id={self.id}, source_type='{self.source_type}', source_id='{self.source_identifier}')>"
-
-    # --- Custom Type Handling (PgVector) ---
-    # SQLAlchemy with pgvector library handles the Scan/Value logic automatically
-    # when using the Vector type. No custom Scan/Value methods needed on the model.

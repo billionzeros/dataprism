@@ -24,8 +24,8 @@ class Workspace(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    name: Mapped[str] = mapped_column(Text, nullable=False) # Text for potentially long names
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True) # Optional description
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -42,12 +42,12 @@ class Workspace(Base):
     # --- Relationships ---
     # One-to-Many relationship with Document
     # `back_populates` links this relationship to the one defined in the Document model
-    documents: Mapped[List[Document]] = relationship(
+    documents: Mapped[List["Document"]] = relationship(
         "Document", back_populates="workspace", cascade="all, delete-orphan"
     )
 
     # One-to-Many relationship with the association table WorkspaceUpload
-    workspace_uploads: Mapped[List[WorkspaceUpload]] = relationship(
+    workspace_uploads: Mapped[List["WorkspaceUpload"]] = relationship(
         "WorkspaceUpload", back_populates="workspace", cascade="all, delete-orphan"
     )
 

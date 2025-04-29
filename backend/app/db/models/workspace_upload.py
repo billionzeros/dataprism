@@ -20,10 +20,16 @@ class WorkspaceUpload(Base):
     """
     __tablename__ = "workspace_uploads"
 
+
     # Composite Primary Key (as defined in GORM)
     # SQLAlchemy requires defining this explicitly if no single 'id' column exists
     __table_args__ = (
         PrimaryKeyConstraint('workspace_id', 'upload_id', name='pk_workspace_upload'),
+    )
+
+    # Primary key for the association entry itself
+    id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
 
     # Foreign Key to Workspace
@@ -47,10 +53,10 @@ class WorkspaceUpload(Base):
 
     # --- Relationships ---
     # Many-to-One relationship back to Workspace
-    workspace: Mapped[Workspace] = relationship("Workspace", back_populates="workspace_uploads")
+    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="workspace_uploads")
 
     # Many-to-One relationship back to Upload
-    upload: Mapped[Upload] = relationship("Upload", back_populates="workspace_links")
+    upload: Mapped["Upload"] = relationship("Upload", back_populates="workspace_links")
 
 
     def __repr__(self):

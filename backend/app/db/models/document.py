@@ -22,6 +22,7 @@ class Document(Base):
     """
     __tablename__ = "documents"
 
+    # Primary key for the document
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
@@ -61,11 +62,11 @@ class Document(Base):
 
     # --- Relationships ---
     # Many-to-One relationship with Workspace
-    workspace: Mapped[Workspace] = relationship("Workspace", back_populates="documents")
+    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="documents")
 
     # One-to-Many relationship with Block
     # Represents all blocks directly belonging to this document
-    blocks: Mapped[List[Block]] = relationship(
+    blocks: Mapped[List["Block"]] = relationship(
         "Block",
         back_populates="document",
         cascade="all, delete-orphan",
@@ -74,7 +75,7 @@ class Document(Base):
 
     # One-to-Many relationship with BlockMatrix
     # Represents the structural links between blocks in this document
-    block_matrix_entries: Mapped[List[BlockMatrix]] = relationship(
+    block_matrix_entries: Mapped[List["BlockMatrix"]] = relationship(
         "BlockMatrix",
         back_populates="document",
         cascade="all, delete-orphan",

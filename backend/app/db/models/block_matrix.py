@@ -91,10 +91,10 @@ class BlockMatrix(Base):
 
     # --- Relationships ---
     # Many-to-One relationship back to the Document
-    document: Mapped[Document] = relationship("Document", back_populates="block_matrix_entries", foreign_keys=[document_id])
+    document: Mapped["Document"] = relationship("Document", back_populates="block_matrix_entries", foreign_keys=[document_id])
 
     # Many-to-One relationship back to the specific Block this entry represents
-    block: Mapped[Block] = relationship("Block", back_populates="matrix_entries", foreign_keys=[block_id])
+    block: Mapped["Block"] = relationship("Block", back_populates="matrix_entries", foreign_keys=[block_id])
 
     # Optional: Relationships for direct access to next/prev/parent blocks if needed often
     # next_block: Mapped[Optional[Block]] = relationship("Block", foreign_keys=[next_block_id])
