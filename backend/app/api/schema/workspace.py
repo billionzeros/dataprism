@@ -21,8 +21,8 @@ class WorkspaceCreateResp(BaseModel):
 
 # ===== Get Workspace ======
 class WorkspaceGetReq(BaseModel):
-    id: uuid.UUID
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    workspace_id: uuid.UUID
+    workspace_name: Optional[str] = Field(None, min_length=1, max_length=255)
 
 class WorkspaceGetResp(BaseModel):
     id: uuid.UUID
