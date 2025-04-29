@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, PostgresDsn, AnyHttpUrl
+from pydantic import Field, PostgresDsn
 
 class Settings(BaseSettings):
     """
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     axiom_token: str = Field(alias="AXIOM_TOKEN")
 
     # --- AWS S3 ---
-    aws_bucket_endpoint: AnyHttpUrl = Field(alias="AWS_BUCKET_ENDPOINT")
+    aws_bucket_endpoint: str = Field(alias="AWS_BUCKET_ENDPOINT")
     aws_bucket_id: str = Field(alias="AWS_BUCKET_ID")
     aws_key_id: str = Field(alias="AWS_KEY_ID")
     aws_secret_key: str = Field(alias="AWS_SECRET_KEY")

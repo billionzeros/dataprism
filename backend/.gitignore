@@ -46,5 +46,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
+__pycache__/
+
 # idea files
 .idea
