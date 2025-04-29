@@ -54,7 +54,7 @@ func NewChatService(ctx context.Context, workspaceId string) (ChatService, error
 
 	gm.Tools = []*genai.Tool{
 		tools.SearchRelevantDocumentsTool,
-		tools.ExecuteDataQueryTool,
+		tools.ExecuteCSVQueryTool,
 	}
 
 	em := gemini.EmbeddingModel(string(provider.Embedding001))
@@ -255,7 +255,7 @@ func (c *chatService) handleSearchRelevantDocuments(fc *genai.FunctionCall) (*ge
 	formattedResultsMaps := make([]map[string]interface{}, 0, len(results))
     for _, res := range results {
         resultMap := map[string]interface{}{
-            "upload_id":       res.SourceIdentifier, // Corrected field name
+            "upload_id":       res.SourceIdentifier,
             "column_name":     res.ColumnOrChunkName,
             "content_snippet": res.OriginalText,
             "relevance_score": res.Similarity,
@@ -263,7 +263,6 @@ func (c *chatService) handleSearchRelevantDocuments(fc *genai.FunctionCall) (*ge
         formattedResultsMaps = append(formattedResultsMaps, resultMap)
     }
 
-    // --- 5. Marshal the Entire Slice into ONE JSON String ---
     var resultsJSONString string
     if len(formattedResultsMaps) > 0 {
         jsonBytes, err := json.Marshal(formattedResultsMaps)
@@ -288,7 +287,7 @@ func (c *chatService) handleSearchRelevantDocuments(fc *genai.FunctionCall) (*ge
     }, nil
 }
 
-func (c *chatService) handleExecuteDataQuery(fc *genai.FunctionCall) (*genai.FunctionResponse, error) {
+func (c *chatService) handleCSVQuery(fc *genai.FunctionCall) (*genai.FunctionResponse, error) {
     queryString, ok := fc.Args["query_string"].(string)
     uploadIDsArg := fc.Args["upload_ids"]
 
@@ -305,7 +304,6 @@ func (c *chatService) handleExecuteDataQuery(fc *genai.FunctionCall) (*genai.Fun
 
 
     if !ok || queryString == "" {
-        // Return error *response* to LLM
         return &genai.FunctionResponse{
             Name: fc.Name,
             Response: map[string]interface{}{
@@ -332,8 +330,8 @@ func (c *chatService) executeFunctionCall(fc *genai.FunctionCall) (*genai.Functi
 	switch fc.Name {
 		case string(tools.SearchRelevantDocumentsToolType):
 			return c.handleSearchRelevantDocuments(fc)
-		case string(tools.ExecuteDataQueryToolType):
-			return c.handleExecuteDataQuery(fc)
+		case string(tools.ExecuteCSVQueryToolType):
+			return c.handleCSVQuery(fc)
 		
 		default:
 			return nil, appError.New(appError.BadRequest, "Invalid function call", nil)

@@ -40,11 +40,11 @@ var SearchRelevantDocumentsTool = &genai.Tool{
 }
 
 // Execute_data_query tool
-const ExecuteDataQueryToolType ToolType = "execute_data_query"
+const ExecuteCSVQueryToolType ToolType = "execute_csv_query"
 
-var ExecuteDataQueryTool = &genai.Tool{
+var ExecuteCSVQueryTool = &genai.Tool{
     FunctionDeclarations: []*genai.FunctionDeclaration{{
-        Name:        "execute_data_query",
+        Name:        "execute_csv_query",
         Description: "Executes a query (e.g., SQL-like) against the actual data in specified CSV uploads to retrieve specific values, filter data, or perform calculations needed to answer the user's question, based on the relevant document columns and their details.",
         Parameters: &genai.Schema{
             Type: genai.TypeObject,
