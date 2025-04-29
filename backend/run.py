@@ -9,6 +9,6 @@ if __name__ == "__main__":
         host=settings.host,
         port=settings.port,
         reload=settings.environment == "development",
-        # workers=4,
-        # log_level="info",
+        workers=settings.workers,
+        log_level=settings.log_level.lower(),
     )
