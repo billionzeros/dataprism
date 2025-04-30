@@ -52,7 +52,7 @@ async def get_workspace(
         response = WorkspaceGetResp(
             id=workspace.id,
             name=workspace.name,
-            description=workspace.description,
+            description=workspace.description if workspace.description else "NA"
         )
 
         return response
@@ -96,7 +96,7 @@ async def create_workspace(
         response = WorkspaceCreateResp(
             id=workspace.id,
             name=workspace.name,
-            description="NA" or workspace.description,
+            description=workspace.description if workspace.description else "NA"
         )
 
         return response

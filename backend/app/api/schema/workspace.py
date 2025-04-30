@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field
 
 # ===== Workspace Create ======
 class WorkspaceCreateReq(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255, alias="workspace_name")
-    description: Optional[str] = Field(None, max_length=255, alias="workspace_description")
+    name: str = Field(..., min_length=1, max_length=255, alias="name")
+    description: Optional[str] = Field(None, max_length=255, alias="description")
 
 class WorkspaceCreateResp(BaseModel):
     id: uuid.UUID
