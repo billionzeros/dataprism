@@ -15,6 +15,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
+    from .workspace import Workspace
     from .document import Document
     from .block import Block
 
@@ -87,20 +88,16 @@ class BlockMatrix(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-    # Note: No DeletedAt equivalent here, assuming matrix entries are hard-deleted or cascade deleted
 
     # --- Relationships ---
+    # Many-to-One relationship back to the Workspace
+    workspace: Mapped["Workspace"] = relationship("Workspace", foreign_keys=[workspace_id])
+
     # Many-to-One relationship back to the Document
-    document: Mapped["Document"] = relationship("Document", back_populates="block_matrix_entries", foreign_keys=[document_id])
+    document: Mapped["Document"] = relationship("Document", back_populates="block_matrix", foreign_keys=[document_id])
 
     # Many-to-One relationship back to the specific Block this entry represents
-    block: Mapped["Block"] = relationship("Block", back_populates="matrix_entries", foreign_keys=[block_id])
-
-    # Optional: Relationships for direct access to next/prev/parent blocks if needed often
-    # next_block: Mapped[Optional[Block]] = relationship("Block", foreign_keys=[next_block_id])
-    # prev_block: Mapped[Optional[Block]] = relationship("Block", foreign_keys=[prev_block_id])
-    # parent_block: Mapped[Optional[Block]] = relationship("Block", foreign_keys=[parent_block_id])
-
+    block: Mapped["Block"] = relationship("Block", back_populates="block_matrix", foreign_keys=[block_id])
 
     def __repr__(self):
         return f"<BlockMatrix(doc_id={self.document_id}, block_id='{self.block_id}', level={self.level})>"

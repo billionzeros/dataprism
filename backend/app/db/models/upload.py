@@ -5,7 +5,7 @@ import enum
 import datetime
 from typing import Optional, List, TYPE_CHECKING
 
-from sqlalchemy import DateTime, func, Text, Index
+from sqlalchemy import DateTime, func, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.dialects.postgresql import ENUM as PG_Enum
@@ -14,15 +14,12 @@ from sqlalchemy.dialects.postgresql import ENUM as PG_Enum
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
-    from .workspace_upload import WorkspaceUpload
+    from .workspace import Workspace
 
-# 1. Define Enum for UploadType
 class UploadType(str, enum.Enum):
-    DOCUMENT = "document"
-    BLOCK = "block"
     CSV = "csv"
     PDF = "pdf"
-    # Add other types as needed
+    PARQUET = "parquet"
 
 # 2. Define the Upload Model
 class Upload(Base):
@@ -31,15 +28,20 @@ class Upload(Base):
     """
     __tablename__ = "uploads"
 
-    # Optional: Add indexes
-    __table_args__ = (
-        Index('ix_upload_source', 'source_type', 'source_identifier'),
-    )
-
     # Primary key for the upload
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
+
+    # Source Information
+    file_name: Mapped[str] = mapped_column(Text, nullable=False)
+    file_type: Mapped[UploadType] = mapped_column(
+        PG_Enum(UploadType, name="upload_type_enum", create_type=False), # Store as VARCHAR
+        nullable=False, index=True
+    )
+    file_size: Mapped[int] = mapped_column(nullable=False) # Size in bytes
+    storage_key: Mapped[str] = mapped_column(Text, nullable=False) # R2 Unique key for the file
+    storage_url: Mapped[str] = mapped_column(Text, nullable=False) # Path or URL, e.g., S3 URL
 
     # Timestamps
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -50,20 +52,14 @@ class Upload(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
 
-    # Source Information
-    source_type: Mapped[UploadType] = mapped_column(
-        PG_Enum(UploadType, name="upload_type_enum", create_type=False), # Store as VARCHAR
-        nullable=False, index=True
-    )
-    source_identifier: Mapped[str] = mapped_column(Text, nullable=False, index=True)
-    file_location: Mapped[str] = mapped_column(Text, nullable=False) # Path or URL
-
     # --- Relationships ---
-    # One-to-Many relationship with the association table WorkspaceUpload
-    workspace_links: Mapped[List["WorkspaceUpload"]] = relationship(
-        "WorkspaceUpload", back_populates="upload", cascade="all, delete-orphan"
+    # Many-to-Many relationship with Workspace via WorkspaceUpload
+    workspaces: Mapped[List["Workspace"]] = relationship(
+        "Workspace",
+        secondary="workspace_uploads",
+        back_populates="uploads",
     )
 
     def __repr__(self):
-        return f"<Upload(id={self.id}, type='{self.source_type}', location='{self.file_location[:30]}...')>"
+        return f"<Upload(id={self.id}, type='{self.file_type}', name='{self.file_name}')>"
 

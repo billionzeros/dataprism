@@ -37,4 +37,29 @@ clean:
 	@find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 
-.PHONY: all install run lint format check clean
+# Create a virtual environment and install dependencies
+migrate-up:
+	@echo ">>> Running database migrations..."
+	@uv run alembic upgrade head
+
+# Run all database migrations up to the latest version
+migrate-down:
+	@echo ">>> Running database migrations down..."
+	@uv run alembic downgrade -1
+
+# Run all database migrations down to the base
+migrate-down-all:
+	@echo ">>> Running all database migrations down..."
+	@uv run alembic downgrade base
+
+# Create a new migration with a message, using the provided name
+migrate-create-empty:
+	@echo ">>> Creating new migration..."
+	@uv run alembic revision -m "$(name)"
+
+# Create a new migration with autogenerate, using the provided name
+migrate-create:
+	@echo ">>> Creating new migration..."
+	@uv run alembic revision --autogenerate -m "$(name)"
+
+.PHONY: all install run lint format check clean migrate-up migrate-down migrate-down-all migrate-create-empty migrate-create

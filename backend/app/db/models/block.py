@@ -3,17 +3,20 @@
 import uuid
 import enum
 import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 
 from sqlalchemy import DateTime, func, ForeignKey, Enum as SQLAlchemyEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.dialects.postgresql import JSONB 
 
-# Import the Base class defined in app/db/base_class.py
 from app.db.base_class import Base
 
-# 1. Define the Enum for BlockType
+if TYPE_CHECKING:
+    from .document import Document
+    from .workspace import Workspace
+    from .block_matrix import BlockMatrix
+
 class BlockType(str, enum.Enum):
     """
     Enumeration for different types of content blocks.
@@ -80,10 +83,15 @@ class Block(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
 
-    # --- Optional: Define Relationships ---
-    # If you have Workspace and Document models defined, you can link them
-    # workspace: Mapped["Workspace"] = relationship(back_populates="blocks")
-    # document: Mapped["Document"] = relationship(back_populates="blocks")
+    # --- Relationships ---
+    # One-to-One relationship with Document
+    document: Mapped["Document"] = relationship("Document", back_populates="blocks", foreign_keys=[document_id])
+
+    # Many-to-One relationship with Workspace
+    workspace: Mapped["Workspace"] = relationship("Workspace", foreign_keys=[workspace_id])
+    
+    # One-to-One relationship with BlockMatrix (if applicable)
+    block_matrix: Mapped["BlockMatrix"] = relationship("BlockMatrix", back_populates="block", foreign_keys="[BlockMatrix.block_id]", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Block(id={self.id}, type='{self.type}', doc_id='{self.document_id}')>"

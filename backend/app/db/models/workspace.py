@@ -13,7 +13,7 @@ from app.db.base_class import Base
 
 if TYPE_CHECKING:
     from .document import Document
-    from .workspace_upload import WorkspaceUpload
+    from .upload import Upload
 
 class Workspace(Base):
     """
@@ -46,9 +46,12 @@ class Workspace(Base):
         "Document", back_populates="workspace", cascade="all, delete-orphan"
     )
 
-    # One-to-Many relationship with the association table WorkspaceUpload
-    workspace_uploads: Mapped[List["WorkspaceUpload"]] = relationship(
-        "WorkspaceUpload", back_populates="workspace", cascade="all, delete-orphan"
+    # Many-to-Many relationship with Upload through the association table WorkspaceUpload
+    uploads: Mapped[List["Upload"]] = relationship(
+        "Upload", 
+        secondary="workspace_uploads", 
+        back_populates="workspaces",
+        lazy="selectin"
     )
 
     def __repr__(self):

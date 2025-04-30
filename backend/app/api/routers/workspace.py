@@ -1,9 +1,9 @@
 import logging
-from typing import Optional
+from typing import Optional, Annotated
 from app.api import deps
 from app.services import workspace as workspace_service
 from app.utils import APP_LOGGER_NAME
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.workspace import Workspace as WorkspaceModel
 from app.api.schema.workspace import WorkspaceCreateReq, WorkspaceCreateResp, WorkspaceGetReq, WorkspaceGetResp
@@ -13,20 +13,19 @@ logger = logging.getLogger(APP_LOGGER_NAME)
 router = APIRouter()
 
 @router.get(
-    "/{workspace_id}",
+    "/",
     summary="Get workspace by ID",
-    response_model=WorkspaceCreateResp,
+    response_model=WorkspaceGetResp,
     tags=["Workspace"],
 )
 async def get_workspace(
     *,
     db: AsyncSession = Depends(deps.get_db),
-    req: WorkspaceGetReq
+    req: Annotated[WorkspaceGetReq, Query()],
 ): 
     """
     Retrieves a workspace by its ID.
     """
-    logger.info("Received Request to get workspace")
 
     try:
         workspace: Optional[WorkspaceModel] = None
@@ -43,11 +42,11 @@ async def get_workspace(
             )
 
         if not workspace:
-            logger.warning(f"Workspace not found: {req.workspace_id or req.workspace_name}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Workspace not found",
             )
+        
         logger.info(f"Retrieved workspace: {workspace.id}")
 
         response = WorkspaceGetResp(
@@ -57,6 +56,10 @@ async def get_workspace(
         )
 
         return response
+    
+    except HTTPException as http_exc:
+        raise http_exc
+    
     except Exception as e:
         logger.error(f"Error retrieving workspace: {e}")
         raise HTTPException(
@@ -65,7 +68,7 @@ async def get_workspace(
         )
 
 @router.post(
-    "/",
+    "/create",
     summary="Create a new workspace",
     status_code=status.HTTP_201_CREATED,
     tags=["Workspace"],

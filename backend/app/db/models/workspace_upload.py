@@ -1,5 +1,3 @@
-# app/models/workspace_upload.py
-
 import uuid
 import datetime
 from typing import TYPE_CHECKING
@@ -20,9 +18,6 @@ class WorkspaceUpload(Base):
     """
     __tablename__ = "workspace_uploads"
 
-
-    # Composite Primary Key (as defined in GORM)
-    # SQLAlchemy requires defining this explicitly if no single 'id' column exists
     __table_args__ = (
         PrimaryKeyConstraint('workspace_id', 'upload_id', name='pk_workspace_upload'),
     )
@@ -36,14 +31,12 @@ class WorkspaceUpload(Base):
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("workspaces.id", ondelete="CASCADE"),
-        # primary_key=True # Part of composite PK defined in __table_args__
     )
 
     # Foreign Key to Upload
     upload_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("uploads.id", ondelete="CASCADE"),
-        # primary_key=True # Part of composite PK defined in __table_args__
     )
 
     # Timestamp for the association
@@ -52,11 +45,17 @@ class WorkspaceUpload(Base):
     )
 
     # --- Relationships ---
-    # Many-to-One relationship back to Workspace
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="workspace_uploads")
+    # Many-to-One back to Workspace
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace",
+        overlaps="uploads,workspaces"
+    )
 
-    # Many-to-One relationship back to Upload
-    upload: Mapped["Upload"] = relationship("Upload", back_populates="workspace_links")
+    # Many-to-One back to Upload
+    upload: Mapped["Upload"] = relationship(
+        "Upload",
+        overlaps="uploads,workspaces"
+    )
 
 
     def __repr__(self):

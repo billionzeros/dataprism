@@ -4,7 +4,6 @@ from app.cloud.r2_client import R2Client
 from fastapi import Request, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Import SessionLocal which is configured in app.db.session
 from app.db.session import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
@@ -20,6 +19,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db
 
         await db.commit()
+
+    except HTTPException as http_exc:
+        if db is not None:
+            await db.rollback()
+        
+        raise http_exc
+    
     except Exception as e:
         logger.error(f"Error creating database session: {e}", exc_info=True)
         if db is not None:

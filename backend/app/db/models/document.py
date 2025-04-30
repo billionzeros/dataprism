@@ -39,11 +39,9 @@ class Document(Base):
     title: Mapped[str] = mapped_column(Text, nullable=True, default="") # Text allows longer titles
 
     # Foreign Key to the root Block (nullable)
-    # Note: GORM's constraint:OnDelete:SET NULL is handled by ForeignKey's ondelete
-    # We need to link this to the Block table's ID, not BlockMatrix
     root_block_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("blocks.id", ondelete="SET NULL", use_alter=True, name="fk_document_root_block"), # use_alter might be needed for circular refs
+        ForeignKey("blocks.id", ondelete="SET NULL", use_alter=True, name="fk_document_root_block"),
         nullable=True,
         index=True
     )
@@ -70,24 +68,19 @@ class Document(Base):
         "Block",
         back_populates="document",
         cascade="all, delete-orphan",
-        foreign_keys="[Block.document_id]" # Specify foreign key if ambiguous
+        foreign_keys="[Block.document_id]", # Specify foreign key if ambiguous
+        lazy="selectin"
     )
 
-    # One-to-Many relationship with BlockMatrix
+    # One-to-One relationship with BlockMatrix
     # Represents the structural links between blocks in this document
-    block_matrix_entries: Mapped[List["BlockMatrix"]] = relationship(
+    block_matrix: Mapped["BlockMatrix"] = relationship(
         "BlockMatrix",
         back_populates="document",
         cascade="all, delete-orphan",
-        foreign_keys="[BlockMatrix.document_id]" # Specify foreign key
+        foreign_keys="[BlockMatrix.document_id]", # Specify foreign key
+        lazy="selectin"
     )
-
-    # Relationship to the specific root block (if needed for easy access)
-    # Optional: Define a direct relationship to the root block if frequently accessed
-    # root_block: Mapped[Optional["Block"]] = relationship(
-    #     "Block",
-    #     foreign_keys=[root_block_id]
-    # )
 
 
     def __repr__(self):
