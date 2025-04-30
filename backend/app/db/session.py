@@ -16,7 +16,7 @@ try:
     )
 
     # Session is used to interact with the database
-    SessionLocal = async_sessionmaker(
+    AsyncSessionLocal = async_sessionmaker(
         bind=async_engine,
         class_=AsyncSession,
         autocommit=False, 

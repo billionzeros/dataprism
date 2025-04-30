@@ -1,9 +1,11 @@
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession
 import logging
+from typing import AsyncGenerator
+from app.cloud.r2_client import R2Client
+from fastapi import Request, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import SessionLocal which is configured in app.db.session
-from app.db.session import SessionLocal
+from app.db.session import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     db: AsyncSession | None = None
     try:
-        db = SessionLocal()
+        db = AsyncSessionLocal()
         yield db
 
         await db.commit()
@@ -30,3 +32,20 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
                 await db.close()   
             except Exception as e:
                 logger.error(f"Error closing database session: {e}", exc_info=True)
+
+
+def get_r2_client(request: Request):
+    """
+    FastAPI dependency that provides a R2 client per request.
+    """
+    r2_client: R2Client | None = getattr(request.app.state, "r2_client", None)
+
+    if r2_client is None or not r2_client:
+        logger.error("R2 client dependency requested, but client is not available or not initialized.")
+
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Storage client is not available or not initialized."
+        )
+    
+    return r2_client
