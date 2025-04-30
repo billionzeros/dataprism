@@ -28,8 +28,6 @@ class JsonFormatter(logging.Formatter):
         if record.stack_info:
             log_record['stack_info'] = self.formatStack(record.stack_info)
 
-        # Add extra fields passed to the logger
-        # e.g., logger.info("User logged in", extra={"user_id": 123})
         extra_keys = set(record.__dict__.keys()) - set(log_record.keys()) - {'args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename', 'levelname', 'levelno', 'message', 'module', 'msecs', 'msg', 'name', 'pathname', 'process', 'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName'}
         for key in extra_keys:
                 log_record[key] = record.__dict__[key]

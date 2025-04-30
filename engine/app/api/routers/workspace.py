@@ -13,7 +13,7 @@ logger = logging.getLogger(APP_LOGGER_NAME)
 router = APIRouter()
 
 @router.get(
-    "/",
+    "",
     summary="Get workspace by ID",
     response_model=WorkspaceGetResp,
     tags=["Workspace"],

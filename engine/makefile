@@ -62,4 +62,8 @@ migrate-create:
 	@echo ">>> Creating new migration..."
 	@uv run alembic revision --autogenerate -m "$(name)"
 
-.PHONY: all install run lint format check clean migrate-up migrate-down migrate-down-all migrate-create-empty migrate-create
+requirements:
+	@echo ">>> Generating requirements.txt..."
+	@uv pip compile pyproject.toml --generate-hashes -o requirements.txt
+
+.PHONY: all install run lint format check clean migrate-up migrate-down migrate-down-all migrate-create-empty migrate-create requirements
