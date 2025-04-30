@@ -20,11 +20,9 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute("CREATE EXTENSION IF NOT EXISTS vector;")
     print("Executed: CREATE EXTENSION IF NOT EXISTS vector;")
-    pass
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     op.execute("DROP EXTENSION IF EXISTS vector;")
     print("Executed: DROP EXTENSION IF EXISTS vector;")
-    pass
