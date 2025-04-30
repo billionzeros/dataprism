@@ -4,7 +4,9 @@ from fastapi import FastAPI
 from app.utils.logging_config import setup_logging, APP_LOGGER_NAME
 from app.api import api
 from app.core.config import settings
+from app.cloud.r2_client import R2Client
 from fastapi.middleware.cors import CORSMiddleware
+
 
 # setup logging configuration
 setup_logging() 
@@ -20,9 +22,22 @@ async def lifespan(app: FastAPI):
     Lifespan event handler for the FastAPI application.
     """
     logger.info("Application startup initiated.")
+    try:
+        r2_client = R2Client()
+        app.state.r2_client = r2_client
+
+    except Exception as e:
+        logger.critical(f"Fatal Error during API Startup: {e}")
+
     yield
 
     logger.info("Application shutdown initiated.")
+
+    if app.state.r2_client:
+        try:
+            app.state.r2_client.close()
+        except Exception as e:
+            logger.error(f"Error closing R2 client connection: {e}")
 
 # Initialize FastAPI app
 app = FastAPI(

@@ -32,13 +32,12 @@ class Settings(BaseSettings):
     axiom_dataset: str = Field(alias="AXIOM_DATASET")
     axiom_token: str = Field(alias="AXIOM_TOKEN")
 
-    # --- AWS S3 ---
-    aws_bucket_endpoint: str = Field(alias="AWS_BUCKET_ENDPOINT")
-    aws_bucket_id: str = Field(alias="AWS_BUCKET_ID")
-    aws_key_id: str = Field(alias="AWS_KEY_ID")
-    aws_secret_key: str = Field(alias="AWS_SECRET_KEY")
-    aws_bucket_name: str = Field(alias="AWS_BUCKET_NAME")
-    aws_bucket_region: str = Field(alias="AWS_BUCKET_REGION")
+    # --- Cloudflare R2 ---
+    r2_account_id: str = Field(alias="R2_ACCOUNT_ID")
+    r2_access_key_id: str = Field(alias="R2_ACCESS_KEY_ID")
+    r2_secret_access_key: str = Field(alias="R2_SECRET_ACCESS_KEY")
+    r2_bucket_name: str = Field(alias="R2_BUCKET_NAME")
+    r2_endpoint_url: str = Field(alias="R2_ENDPOINT_URL")
 
 
     model_config = SettingsConfigDict(
