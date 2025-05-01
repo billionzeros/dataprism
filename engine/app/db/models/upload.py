@@ -21,6 +21,12 @@ class UploadType(str, enum.Enum):
     PDF = "pdf"
     PARQUET = "parquet"
 
+class ProcessingStatus(str, enum.Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    PROCESSED = "processed"
+    FAILED = "failed"
+
 # 2. Define the Upload Model
 class Upload(Base):
     """
@@ -42,6 +48,12 @@ class Upload(Base):
     file_size: Mapped[int] = mapped_column(nullable=False) # Size in bytes
     storage_key: Mapped[str] = mapped_column(Text, nullable=False) # R2 Unique key for the file
     storage_url: Mapped[str] = mapped_column(Text, nullable=False) # Path or URL, e.g., S3 URL
+
+    # Processing Information
+    processing_status: Mapped[ProcessingStatus] = mapped_column(
+        PG_Enum(ProcessingStatus, name="processing_status_enum", create_type=True),
+        nullable=False, index=True, default=ProcessingStatus.PENDING
+    )
 
     # Timestamps
     created_at: Mapped[datetime.datetime] = mapped_column(

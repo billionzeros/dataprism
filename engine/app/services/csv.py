@@ -3,8 +3,23 @@ import logging
 import pandas as pd
 from typing import BinaryIO
 from app.utils import APP_LOGGER_NAME
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.models.upload import Upload as UploadModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
+
+async def create_upload(
+    db: AsyncSession,
+    upload_info: UploadModel,
+) -> UploadModel:
+    """
+    Uploads a file to the database.
+    """
+    db.add(upload_info)
+    await db.commit()
+    await db.refresh(upload_info)
+
+    return upload_info
 
 async def convert_csv_to_parquet_stream(
         csv_stream: BinaryIO
