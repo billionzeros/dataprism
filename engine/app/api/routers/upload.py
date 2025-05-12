@@ -16,6 +16,93 @@ logger = logging.getLogger(APP_LOGGER_NAME)
 # Router for CSV Upload
 router = APIRouter()
 
+@router.get(
+    "/all",
+    status_code=status.HTTP_200_OK,
+    summary="Get all uploads",
+    tags=["upload"],
+)
+async def get_all_uploads(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+):
+    """
+    Retrieves all uploads with pagination.
+    """
+
+    try:
+        uploads = await csv_service.get_uploads(db=db, skip=skip, limit=limit)
+        if not uploads:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No uploads found",
+            )
+        
+        response = [
+            UploadCreateResp(
+                id=upload.id,
+                file_name=upload.file_name,
+                file_size=upload.file_size,
+                file_type=upload.file_type,
+                storage_key=upload.storage_key,
+                storage_url=upload.storage_url,
+            )
+            for upload in uploads
+        ]
+
+        return response
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"Error retrieving uploads: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while retrieving the uploads.",
+        )
+
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    summary="Get upload by ID",
+    tags=["upload"],
+)
+async def get_upload(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    upload_id: uuid.UUID,
+):
+    """
+    Retrieves an upload by its ID.
+    """
+    try:
+        upload = await csv_service.get_upload_by_id(db=db, upload_id=upload_id)
+        if not upload:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Upload not found",
+            )
+        
+        response = UploadCreateResp(
+            id=upload.id,
+            file_name=upload.file_name,
+            file_size=upload.file_size,
+            file_type=upload.file_type,
+            storage_key=upload.storage_key,
+            storage_url=upload.storage_url,
+        )
+
+        return response
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"Error retrieving upload: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while retrieving the upload.",
+        )
+
 # CSV Upload Endpoint
 @router.post(
     "/csv",
@@ -39,7 +126,7 @@ async def upload_csv(
     
     parquet_buffer: io.BytesIO | None = None
     file_name = csv_file.filename[:-4] + ".parquet"
-    r2_object_key = f"{uuid.uuid4()}/{file_name}"
+    r2_object_key = f"uploads/parquet/{uuid.uuid4()}/{file_name}"
 
     try:
         logger.info(f"Processing CSV file: {csv_file.filename}")

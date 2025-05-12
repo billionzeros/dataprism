@@ -1,10 +1,12 @@
 import io
 import logging
+import uuid
 import pandas as pd
-from typing import BinaryIO
+from typing import BinaryIO, Optional
 from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.upload import Upload as UploadModel
+from sqlalchemy import select
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -20,6 +22,32 @@ async def create_upload(
     await db.refresh(upload_info)
 
     return upload_info
+
+async def get_uploads(
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[UploadModel]:
+    """
+    Retrieves all uploads from the database with pagination.
+    """
+    statement = select(UploadModel).offset(skip).limit(limit)
+    result = await db.execute(statement)
+    
+    return list(result.scalars().all())
+
+async def get_upload_by_id(
+    db: AsyncSession,
+    upload_id: uuid.UUID,
+) -> Optional[UploadModel]:
+    """
+    Retrieves a file from the database by its ID.
+    """
+    statement = select(UploadModel).where(UploadModel.id == upload_id)
+    result = await db.execute(statement)
+    
+    return result.scalars().first()
+
 
 async def convert_csv_to_parquet_stream(
         csv_stream: BinaryIO
