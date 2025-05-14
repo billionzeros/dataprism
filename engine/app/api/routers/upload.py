@@ -1,15 +1,19 @@
 import io
 import asyncio
 import uuid
+import duckdb
 import logging
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from app.utils import APP_LOGGER_NAME 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.cloud import R2Client, R2UploadError
 from app.services import csv as csv_service
+from app.core.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel
 from app.api.schema.upload  import UploadCreateResp
+from app.services.duck_db import DuckDBConn
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -104,6 +108,91 @@ async def get_upload(
         )
 
 # CSV Upload Endpoint
+@router.post(
+    "/process",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Process CSV file",
+    tags=["upload"],
+)
+async def process_csv(
+    *,
+    upload_id: uuid.UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    r2_client: R2Client = Depends(deps.get_r2_client),
+):
+    """
+    Processes a CSV file, using DuckDB retrive the headers of the CSV 
+    after which send the headers of the CSV for further understanding the context
+    of the headers after which upload them to the Database.
+    """
+    logger.info(f"Processing CSV file with ID: {upload_id}")
+
+    try:
+        upload = await csv_service.get_upload_by_id(db=db, upload_id=upload_id)
+
+        if not upload:
+            logger.warning(f"Upload with ID {upload_id} not found.")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Upload not found",
+            )
+        
+        logger.info(f"Upload found: {upload.file_name}, Upload Storage Url: {upload.storage_url}")
+
+        # CSV Parsed Headers
+        headers: List[str] = []
+        try:
+            with DuckDBConn() as duckdb_conn:
+                s3_uri = f"s3://{settings.r2_bucket_name}/{upload.storage_key}"
+
+                describe_query = f"DESCRIBE SELECT * FROM read_parquet('{s3_uri}');"
+                logger.debug(f"Executing DuckDB describe query: {describe_query}")
+
+                conn = duckdb_conn.conn
+
+                if conn is None:
+                    logger.error("DuckDB connection is None.")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to establish DuckDB connection.",
+                    )
+
+                describe_result = conn.execute(describe_query).fetchall()
+
+                if not describe_result:
+                    logger.warning(f"DuckDB DESCRIBE query returned no results for {s3_uri}, upload {upload_id}. File might be empty or unreadable.")
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not read metadata from file in storage. File might be empty or corrupted.")
+            
+                headers = [row[0] for row in describe_result]
+
+                logger.info(f"Successfully extracted headers for upload {upload_id}: {headers}")
+
+        except duckdb.Error as e:
+            logger.error(f"DuckDB Processing Error: {e}")
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to process CSV file with DuckDB.",
+            )
+        
+        except HTTPException:
+            raise
+
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"Error processing CSV file: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while processing the CSV file.",
+        )
+    
+    return {
+        "message": "CSV file processed successfully.",
+        "upload_id": upload_id,
+    }
+
+
 @router.post(
     "/csv",
     status_code=status.HTTP_202_ACCEPTED,

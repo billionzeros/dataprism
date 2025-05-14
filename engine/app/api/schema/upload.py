@@ -31,3 +31,18 @@ class UploadGetResp(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+# =============================
+
+# ===== Process Upload ======
+class ProcessUploadResp(BaseModel):
+    id: uuid.UUID
+    file_name: str
+    file_type: str
+    file_size: int
+    storage_key: str
+    storage_url: str
+
+    model_config = {
+        "from_attributes": True,
+    }
