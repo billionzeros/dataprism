@@ -1,4 +1,5 @@
 import logging
+import dspy
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.utils.logging_config import setup_logging, APP_LOGGER_NAME
@@ -25,6 +26,9 @@ async def lifespan(app: FastAPI):
     try:
         r2_client = R2Client()
         app.state.r2_client = r2_client
+
+        lm = dspy.LM(model="gemini/gemini-2.0-flash", api_key=settings.gemini_api_key, cache=True)
+        dspy.configure(lm=lm, track_usage=True)
 
     except Exception as e:
         logger.critical(f"Fatal Error during API Startup: {e}")

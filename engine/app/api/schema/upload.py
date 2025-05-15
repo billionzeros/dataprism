@@ -39,9 +39,7 @@ class ProcessUploadResp(BaseModel):
     id: uuid.UUID
     file_name: str
     file_type: str
-    file_size: int
-    storage_key: str
-    storage_url: str
+    embeddings_count: int
 
     model_config = {
         "from_attributes": True,

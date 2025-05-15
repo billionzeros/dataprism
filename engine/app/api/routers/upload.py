@@ -12,8 +12,10 @@ from app.cloud import R2Client, R2UploadError
 from app.services import csv as csv_service
 from app.core.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel
-from app.api.schema.upload  import UploadCreateResp
+from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp
 from app.services.duck_db import DuckDBConn
+from app.pipeline.modules.HeaderDescription import PredictHeaderDescription, HeaderDescriptionContext
+from app.pipeline.modules.Embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -134,38 +136,66 @@ async def process_csv(
             logger.warning(f"Upload with ID {upload_id} not found.")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Upload not found",
+                detail=f"Upload not found with ID {upload_id}.",
             )
         
-        logger.info(f"Upload found: {upload.file_name}, Upload Storage Url: {upload.storage_url}")
+        if not upload.storage_key:
+            logger.warning(f"Upload with ID {upload_id} has no storage key.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Upload does not have a valid storage key.",
+            )
 
-        # CSV Parsed Headers
         headers: List[str] = []
+        num_sample_rows = 3
+        headers_context: List[HeaderDescriptionContext] = []
+
         try:
             with DuckDBConn() as duckdb_conn:
                 s3_uri = f"s3://{settings.r2_bucket_name}/{upload.storage_key}"
 
-                describe_query = f"DESCRIBE SELECT * FROM read_parquet('{s3_uri}');"
+                describe_query = "DESCRIBE SELECT * FROM read_parquet(?);"
                 logger.debug(f"Executing DuckDB describe query: {describe_query}")
 
                 conn = duckdb_conn.conn
 
                 if conn is None:
-                    logger.error("DuckDB connection is None.")
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail="Failed to establish DuckDB connection.",
                     )
 
-                describe_result = conn.execute(describe_query).fetchall()
+                headers_result = conn.execute(describe_query, parameters=[s3_uri]).fetchall()
 
-                if not describe_result:
-                    logger.warning(f"DuckDB DESCRIBE query returned no results for {s3_uri}, upload {upload_id}. File might be empty or unreadable.")
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not read metadata from file in storage. File might be empty or corrupted.")
-            
-                headers = [row[0] for row in describe_result]
+                if not headers_result:
+                    logger.error(f"No headers found for upload {upload_id}.")
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="No headers found for the CSV file.",
+                    )
+
+                for row in headers_result:
+                    context = HeaderDescriptionContext(
+                        header_name=row[0],
+                        sample_data=[],
+                    )
+                    headers_context.append(context)
+                    headers.append(row[0])
 
                 logger.info(f"Successfully extracted headers for upload {upload_id}: {headers}")
+
+                if headers:
+                    sample_query = f"SELECT {', '.join(headers)} FROM read_parquet(?) LIMIT ?;"
+                    sample_result = conn.execute(sample_query, parameters=[s3_uri, num_sample_rows]).fetchall()
+
+                    if sample_result:
+                        for row in sample_result:
+                            for i, sample_data in enumerate(row):
+                                context = headers_context[i]
+                                if context is not None:
+                                    context.sample_data.append(sample_data)
+                    else:
+                        logger.warning(f"No sample data found for upload {upload_id}.")
 
         except duckdb.Error as e:
             logger.error(f"DuckDB Processing Error: {e}")
@@ -178,6 +208,48 @@ async def process_csv(
         except HTTPException:
             raise
 
+        # Process headers context
+        predict = PredictHeaderDescription()
+
+        output = predict(
+            headers_count = len(headers),
+            headers_info = headers_context,
+        )
+
+        em = Embedder(config=EmbedContentConfig(
+            task_type="SEMANTIC_SIMILARITY",
+        ))
+
+        ems = em.generate_embeddings(content=[header.model_dump_json() for header in output])
+        if not ems:
+            logger.error("Failed to generate embeddings.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate embeddings.",
+            )
+        
+        await em.store_embeddings(
+            db=db,
+            ems=[
+                EmbeddingModel(
+                    source_type=EmbeddingSourceType.CSV_COLUMN,
+                    source_identifier=upload_id,
+                    column_or_chunk_name=header.header_name,
+                    original_text=header.model_dump_json(),
+                    embedding=embedding,
+                )
+                for embedding, header in zip(ems, output)
+            ],
+        )
+
+        response = ProcessUploadResp(
+            id= upload.id,
+            embeddings_count= len(ems),
+            file_name= upload.file_name,
+            file_type= upload.file_type,
+        )
+
+        return response
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:
@@ -186,12 +258,6 @@ async def process_csv(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while processing the CSV file.",
         )
-    
-    return {
-        "message": "CSV file processed successfully.",
-        "upload_id": upload_id,
-    }
-
 
 @router.post(
     "/csv",

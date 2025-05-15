@@ -55,18 +55,12 @@ class VectorEmbedding(Base):
         PG_Enum(EmbeddingSourceType, name="embedding_source_type_enum", create_type=False), # create_type=False stores as VARCHAR
         nullable=False, index=True
     )
-    # Option 2: Store Enum as native PostgreSQL ENUM (less portable, requires DB setup)
-    # source_type: Mapped[EmbeddingSourceType] = mapped_column(
-    #      PG_Enum(EmbeddingSourceType, name="embedding_source_type_enum", create_type=True),
-    #      nullable=False, index=True
-    # )
 
     source_identifier: Mapped[str] = mapped_column(Text, nullable=False, index=True) # Use Text for flexibility
     related_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     column_or_chunk_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     original_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True) # Store original text if possible
 
-    # Embedding Vector
     embedding: Mapped[List[float]] = mapped_column(Vector(768), nullable=False)
 
     def __repr__(self):
