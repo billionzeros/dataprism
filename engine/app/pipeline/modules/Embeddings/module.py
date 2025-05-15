@@ -4,8 +4,8 @@ from app.core.config import settings
 from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
-from google.genai.types import EmbedContentConfig, EmbedContentResponse
-from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel, EmbeddingSourceType
+from google.genai.types import EmbedContentConfig
+from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 

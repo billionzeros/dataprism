@@ -11,7 +11,7 @@ from app.api import deps
 from app.cloud import R2Client, R2UploadError
 from app.services import csv as csv_service
 from app.core.config import settings
-from app.db.models.upload import UploadType, Upload as UploadModel
+from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
 from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp
 from app.services.duck_db import DuckDBConn
 from app.pipeline.modules.HeaderDescription import PredictHeaderDescription, HeaderDescriptionContext
@@ -139,13 +139,20 @@ async def process_csv(
                 detail=f"Upload not found with ID {upload_id}.",
             )
         
+        if upload.processing_status == ProcessingStatus.PROCESSING:
+            logger.warning(f"Upload with ID {upload_id} is already being processed.")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Upload is already being processed.",
+            )
+        
         if not upload.storage_key:
             logger.warning(f"Upload with ID {upload_id} has no storage key.")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Upload does not have a valid storage key.",
             )
-
+        
         headers: List[str] = []
         num_sample_rows = 3
         headers_context: List[HeaderDescriptionContext] = []
@@ -154,8 +161,8 @@ async def process_csv(
             with DuckDBConn() as duckdb_conn:
                 s3_uri = f"s3://{settings.r2_bucket_name}/{upload.storage_key}"
 
+                # DuckDB query to describe the CSV file
                 describe_query = "DESCRIBE SELECT * FROM read_parquet(?);"
-                logger.debug(f"Executing DuckDB describe query: {describe_query}")
 
                 conn = duckdb_conn.conn
 
@@ -233,10 +240,10 @@ async def process_csv(
             ems=[
                 EmbeddingModel(
                     source_type=EmbeddingSourceType.CSV_COLUMN,
-                    source_identifier=upload_id,
+                    source_identifier=str(upload.id),
                     column_or_chunk_name=header.header_name,
                     original_text=header.model_dump_json(),
-                    embedding=embedding,
+                    embedding=embedding.values,
                 )
                 for embedding, header in zip(ems, output)
             ],
@@ -258,6 +265,7 @@ async def process_csv(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while processing the CSV file.",
         )
+
 
 @router.post(
     "/csv",

@@ -76,14 +76,10 @@ class PredictHeaderDescription(dspy.Module):
         Given the headers and sample data, generate a concise description of what the target column header represents
         in the context of this specific file.
         """
-        logger.info(f"Generating header description for {headers_count} headers, headers_info: {headers_info}")
-
         prediction = self._predict_description(
             headers_count=headers_count,
             headers_info=self._encode_ctx_to_str(headers_info),
         )
-
-        logger.info(f"Generated header description: {prediction}")
 
         if prediction.headers_description:
             try:
