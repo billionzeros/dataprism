@@ -71,7 +71,7 @@ class PredictHeaderDescription(dspy.Module):
     def __init__(self):
         self._predict_description = dspy.Predict(GenerateHeaderDescription)
 
-    def __call__(self, headers_count: int, headers_info: List[HeaderDescriptionContext]):
+    def forward(self, headers_count: int, headers_info: List[HeaderDescriptionContext]):
         """
         Given the headers and sample data, generate a concise description of what the target column header represents
         in the context of this specific file.
