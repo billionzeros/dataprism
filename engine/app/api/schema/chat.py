@@ -40,6 +40,7 @@ class TestChatResp(BaseModel):
     user_query: str
     final_answer: str
     thought_process: Dict[str, Any]
+    thought_synthesis: str
 
     model_config = {
         "from_attributes": True,

@@ -33,7 +33,8 @@ async def test_chat_service(req: TestChatReq):
         chat_id=chat_service.chat_id,
         user_query=req.user_query,
         final_answer=result.final_answer,
-        thought_process=result.thought_process
+        thought_process=result.thought_process,
+        thought_synthesis=result.thought_synthesis,
     )
 
     return response

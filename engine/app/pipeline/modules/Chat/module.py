@@ -198,7 +198,6 @@ class ChatModule(dspy.Module):
         # Plans the thoughts after each iteration
         turn_thought_log = {
             "iterations": [],
-            "synthesis_thought": None
         }
 
         for i in range(self._max_thinking_iterations):
@@ -235,11 +234,6 @@ class ChatModule(dspy.Module):
                 turn_thought_log["iterations"].append(iteration_log)
                 final_answer = "I encountered an issue while planning how to respond. Please try rephrasing your query."
                 return dspy.Prediction(final_answer=final_answer, full_thought_process=turn_thought_log)
-
-
-
-
-
 
             logger.info("Stage 2: Reflection")
             current_execution_log_entries = []
@@ -344,8 +338,6 @@ class ChatModule(dspy.Module):
 
         final_answer = str(synthesis.final_answer)
 
-        turn_thought_log["synthesis_thought"] = synthesis.thought_synthesis
-
         logger.info(f"Synthesizer Thought: {synthesis.thought_synthesis}")
         logger.info(f"Final Answer: {final_answer}")
 
@@ -353,4 +345,5 @@ class ChatModule(dspy.Module):
         return dspy.Prediction(
             final_answer=final_answer,
             thought_process=turn_thought_log,
+            thought_synthesis=synthesis.thought_synthesis,
         )
