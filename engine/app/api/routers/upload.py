@@ -9,7 +9,7 @@ from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.cloud import R2Client, R2UploadError
-from engine.app.services.upload import csv as csv_service
+from app.services.upload import csv as csv_service
 from app.core.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
 from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp
