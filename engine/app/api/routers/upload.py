@@ -227,7 +227,7 @@ async def process_csv(
             task_type="SEMANTIC_SIMILARITY",
         ))
 
-        ems = em.generate_embeddings(content=[header.model_dump_json() for header in output])
+        ems = em.generate_embeddings(content=[header.model_dump_json() for header in output.headers_info])
         if not ems:
             logger.error("Failed to generate embeddings.")
             raise HTTPException(

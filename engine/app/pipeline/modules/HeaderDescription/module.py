@@ -103,7 +103,9 @@ class PredictHeaderDescription(dspy.Module):
         else:
             logger.warning("No headers_description found in the prediction")
 
-        return headers_info
+        return dspy.Prediction(
+            headers_info=headers_info,
+        )
     
     def _encode_ctx_to_str(self, data: List[HeaderDescriptionContext]):
         """
