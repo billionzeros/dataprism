@@ -28,7 +28,8 @@ async def lifespan(app: FastAPI):
         app.state.r2_client = r2_client
 
         lm = dspy.LM(model="gemini/gemini-2.0-flash", api_key=settings.gemini_api_key, cache=True)
-        dspy.configure(lm=lm, track_usage=True)
+        # dspy.configure(lm=lm, track_usage=True)
+        dspy.configure(lm=lm)
 
     except Exception as e:
         logger.critical(f"Fatal Error during API Startup: {e}")

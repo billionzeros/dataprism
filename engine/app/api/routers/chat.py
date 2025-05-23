@@ -1,14 +1,44 @@
 import logging
 from app.utils import APP_LOGGER_NAME
 from fastapi import APIRouter, status, HTTPException
-from ..schema.chat import CreateChatReq, CreateChatResp
+from ..schema.chat import CreateChatReq, CreateChatResp, TestChatReq, TestChatResp
 from app.services.chat import ChatService
+from app.pipeline.modules.chat import ChatModule
 
 router = APIRouter()
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
-@router.get(
+
+@router.post(
+    "/test",
+    status_code=status.HTTP_200_OK,
+    summary="Test Chat Service",
+    response_model=TestChatResp,
+)
+async def test_chat_service(req: TestChatReq):
+    """
+    Test the Chat DSPy Module.
+    """
+
+    chat_service = ChatService.create()
+
+    module = ChatModule(chat_id=chat_service.chat_id, tools = [])
+
+    result = module.forward(user_query=req.user_query)
+
+    logger.info(f"Chat Service Test Result: {result}")
+
+    response = TestChatResp(
+        chat_id=chat_service.chat_id,
+        user_query=req.user_query,
+        final_answer=result.final_answer,
+        thought_process=result.thought_process
+    )
+
+    return response
+
+@router.post(
     "/create",
     response_model=CreateChatResp,
     status_code=status.HTTP_200_OK,
