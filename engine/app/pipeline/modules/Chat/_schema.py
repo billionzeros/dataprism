@@ -7,7 +7,7 @@ class PlanQuerySignature(dspy.Signature):
     Plan actions: 'call_tool(<tool_name>, <tool_input>)' or 'answer_directly(<summary>)'.
     """
     # Input fields
-    user_query = dspy.InputField(desc="The user's current question or statement.")
+    user_query: str = dspy.InputField(desc="The user's current question or statement.")
     chat_history = dspy.InputField(desc="The history of the conversation.", T=dspy.History)
     available_tools_desc = dspy.InputField(desc="Description of available tools.")
     feedback_on_previous_attempt = dspy.InputField(desc="Optional feedback from a previous execution cycle for this query.")

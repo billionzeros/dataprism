@@ -1,5 +1,4 @@
 import re
-import json
 import logging
 import uuid
 import dspy
@@ -223,12 +222,12 @@ class ChatModule(dspy.Module):
                 current_plan: List[str] = planner_output.plan
                 if not isinstance(current_plan, list) or not all(isinstance(item, str) for item in current_plan):
                     logger.warning(f"Planner output 'plan' is not a List[str]: {current_plan}. Attempting to use as is or correct.")
-                    if isinstance(current_plan, str): # If LLM mistakenly returns a single string action
-                         current_plan = [current_plan]
-                    elif not isinstance(current_plan, list): # If it's something else entirely
-                         current_plan = [str(current_plan)] # Best effort
-                    else: # It's a list, but maybe not of strings
-                         current_plan = [str(item) for item in current_plan]
+                    if isinstance(current_plan, str):
+                            current_plan = [current_plan]
+                    elif not isinstance(current_plan, list):
+                            current_plan = [str(current_plan)]
+                    else:
+                            current_plan = [str(item) for item in current_plan]
 
             except Exception as e:
                 logger.error(f"Error during Planner stage: {e}", exc_info=True)
