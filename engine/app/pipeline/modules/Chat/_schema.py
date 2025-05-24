@@ -1,5 +1,5 @@
 import dspy
-from typing import List
+from typing import List, Literal
 class PlanQuerySignature(dspy.Signature):
     """
     Given the user query, chat history, available tools, and optional feedback from a previous attempt,
@@ -13,7 +13,7 @@ class PlanQuerySignature(dspy.Signature):
     feedback_on_previous_attempt = dspy.InputField(desc="Optional feedback from a previous execution cycle for this query.")
     
     # Output fields
-    thought_plan = dspy.OutputField(desc="Step-by-step thinking process for the plan.", prefix="plan_thought:")
+    thought_plan: str = dspy.OutputField(desc="Step-by-step thinking process for the plan.", prefix="plan_thought:")
     plan: List[str]  = dspy.OutputField(desc="List of actions. E.g., ['call_tool(SearchEmbedding, query=\"topic\")'] or ['answer_directly(\"Hello!\")']", format="list[str]", prefix="plan:")
 
 
@@ -29,9 +29,9 @@ class ReflectionSignature(dspy.Signature):
     execution_log_and_results = dspy.InputField(desc="Log of tool calls and their outputs/errors from the recent execution.")
 
     # Output fields
-    assessment_thought = dspy.OutputField(desc="Detailed reasoning about the sufficiency, relevance, and quality of the gathered information in relation to the user's query. Identify gaps or issues.")
-    next_step_decision = dspy.OutputField(desc="Choose one: 'ANSWER_WITH_SYNTHESIS' (if info is sufficient or max attempts reached), or 'REPLAN_AND_EXECUTE' (if more/different actions are needed).")
-    guidance_for_next_step = dspy.OutputField(desc="If 'REPLAN_AND_EXECUTE', provide specific feedback/suggestions for the planner. If 'ANSWER_WITH_SYNTHESIS', briefly note key points to focus on for the synthesizer or confirm sufficiency.")
+    assessment_thought: str = dspy.OutputField(desc="Detailed reasoning about the sufficiency, relevance, and quality of the gathered information in relation to the user's query. Identify gaps or issues.")
+    next_step_decision: Literal['ANSWER_WITH_SYNTHESIS', 'REPLAN_AND_EXECUTE'] = dspy.OutputField(desc="Choose one: 'ANSWER_WITH_SYNTHESIS' (if info is sufficient or max attempts reached), or 'REPLAN_AND_EXECUTE' (if more/different actions are needed).")
+    guidance_for_next_step: str = dspy.OutputField(desc="If 'REPLAN_AND_EXECUTE', provide specific feedback/suggestions for the planner. If 'ANSWER_WITH_SYNTHESIS', briefly note key points to focus on for the synthesizer or confirm sufficiency.")
 
 class SynthesizeResponseSignature(dspy.Signature):
     """
@@ -48,5 +48,5 @@ class SynthesizeResponseSignature(dspy.Signature):
     synthesis_guidance_from_reflector = dspy.InputField(desc="Any specific guidance or notes from the reflection step to aid in synthesis.")
 
     # Output fields
-    thought_synthesis = dspy.OutputField(desc="Step-by-step thinking to synthesize the final answer from the gathered information.")
-    final_answer = dspy.OutputField(desc="The comprehensive answer to the user.")
+    thought_synthesis: str = dspy.OutputField(desc="Step-by-step thinking to synthesize the final answer from the gathered information.")
+    final_answer: str = dspy.OutputField(desc="The comprehensive answer to the user.")
