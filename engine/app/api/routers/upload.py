@@ -12,7 +12,7 @@ from app.cloud import R2Client, R2UploadError
 from app.services.upload import csv as csv_service
 from app.core.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
-from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp
+from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp, CheckAbleToAccessFileResp
 from app.services.duck_db import DuckDBConn
 from app.pipeline.modules.headerDescription import PredictHeaderDescription, HeaderDescriptionContext
 from app.pipeline.utils.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
@@ -21,6 +21,93 @@ logger = logging.getLogger(APP_LOGGER_NAME)
 
 # Router for CSV Upload
 router = APIRouter()
+
+@router.get(
+    "/validate",
+    status_code=status.HTTP_200_OK,
+    summary="Validate CSV upload",
+    tags=["upload"],
+)
+async def validate_csv_upload(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    upload_id: str,
+):
+    """
+    Validates the CSV upload by checking if the upload exists and is of type CSV.
+    """
+    try:
+        upload_uuid = uuid.UUID(upload_id)
+
+        upload = await csv_service.get_upload_by_id(db=db, upload_id=upload_uuid)
+        if not upload:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Upload not found",
+            )
+        
+        response = CheckAbleToAccessFileResp(
+            able_to_access=False,
+            error_message=None,
+        )
+        
+        try:
+            with DuckDBConn() as duckdb_conn:
+                logger.info(f"Upload Storage Key: {upload.storage_key}")
+                s3_uri = f"s3://{settings.r2_bucket_name}/{upload.storage_key}"
+
+                describe_query = "DESCRIBE SELECT * FROM read_parquet(?);"
+
+                conn = duckdb_conn.conn
+
+                if conn is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to establish DuckDB connection.",
+                    )
+                
+                headers_result = conn.execute(describe_query, parameters=[s3_uri]).fetchall()
+
+                if not headers_result:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="No headers found for the CSV file.",
+                    )
+                response.able_to_access = True
+                response.error_message = None
+
+                return response
+
+        except duckdb.Error as e:
+            logger.error(f"DuckDB Error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to process CSV file with DuckDB.",
+            )
+            
+        except ValueError as ve:
+            logger.error(f"Invalid CSV file: {ve}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid CSV file: {ve}",
+            )
+
+        except Exception as e:
+            logger.error(f"Error processing CSV file: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while processing the CSV file.",
+            )
+        
+        return response
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"Error validating CSV upload: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while validating the CSV upload.",
+        )
 
 @router.get(
     "/all",

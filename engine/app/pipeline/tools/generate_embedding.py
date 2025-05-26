@@ -65,7 +65,11 @@ async def generate_query_embedding(query: str) -> List[float]:
 
 QueryEmbeddingGeneratorTool = dspy.Tool(
     name="QueryEmbeddingGenerator",
-    desc="Generates a vector embedding for a given text query. This is useful when you need to convert text into its vector representation, for example, to then use it with a similarity search tool.",
+    desc="""
+    Generates a vector embedding for a given text query. This is useful when you need to convert text into its vector representation, for example, to then use it with a similarity search tool.
+
+    It returns a list of floats representing the embedding of the query.
+    """,
     func=generate_query_embedding,
     args={
         "query": dspy.InputField(

@@ -1,5 +1,6 @@
 import uuid
 from pydantic import BaseModel
+from typing import Optional
 
 
 # ===== Upload Create ======
@@ -45,3 +46,16 @@ class ProcessUploadResp(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+# =============================
+
+# ===== Check Able to Access File ======
+class CheckAbleToAccessFileResp(BaseModel):
+    able_to_access: bool
+    error_message: Optional[str] = None
+
+    model_config = {
+        "from_attributes": True,
+    }
+
+# =============================

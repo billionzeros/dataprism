@@ -157,7 +157,22 @@ async def similarity_search(query_str: str, k: int = 5, additional_filters: Opti
     
 FindRelevantDocuments = dspy.Tool(
     name="FindRelevantDocuments",
-    desc="Find the most similar documents based on the provided query string, this TOOL only use is to find relevant documents to the query string, this help gaining more context which might be relevant to the query.",
+    desc=(
+        """
+            Find the most similar documents based on the provided query string, this TOOL only use is to find relevant documents to the query string, this help gaining more context which might be relevant to the query.
+
+            It return a list of Relevant Documents each containing the following fields:
+            - id: The unique identifier of the document, of the table storing different vector_embeddings.
+            - source_type: The type of the source, such as 'document', 'block', 'CSV_COLUMN', etc.
+            - source_identifier: The identifier of the source, such as an `upload_id` for documents.
+            - column_or_chunk_name: The name of the column or chunk, if applicable.
+            - related_id: The related ID of the embedding, if applicable.
+
+            source_identfier means different things depending on the source_type:
+            - For `CSV_COLUMN` it is the `upload_id` of the CSV file.
+            - For `DOCUMENT` it is the `upload_id` of the document.
+            - For `BLOCK` it is the `upload_id` of the document or file containing the block.
+        """),
     func=similarity_search,
     args={
         "query_str": dspy.InputField(

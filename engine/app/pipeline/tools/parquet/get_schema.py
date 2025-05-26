@@ -1,23 +1,15 @@
 import logging
 import dspy
 import uuid
-from typing import List, Any, Optional
-from app.core.config import settings
+from typing import Any, Optional
 from pydantic import BaseModel
+from app.core.config import settings
 from app.services.duck_db import DuckDBConn
-
-
 from app.utils import APP_LOGGER_NAME
 from app.db.session import AsyncSessionLocal 
 from app.db.models.upload import Upload as UploadModel 
 
 logger = logging.getLogger(APP_LOGGER_NAME)
-
-class ColumnSchemaDetail(BaseModel):
-    column_name: str
-    description: Optional[str] = None
-    inferred_data_type: Optional[str] = None 
-    sample_values: Optional[List[Any]] = None
 
 class FileSchemaResult(BaseModel):
     upload_id: str
@@ -25,12 +17,17 @@ class FileSchemaResult(BaseModel):
     Unique identifier for the uploaded file, typically a UUID string.
     """
 
+    storage_key: Optional[str] = None
+    """
+    Storage key in the database or object storage where the file is stored, Right now stored on R2 Bucket.
+    """
+
     file_name: Optional[str] = None
     """
     Name of the file associated with the upload_id, if available.
     """
 
-    header_result: Optional[List[Any]] = None
+    header_result: Optional[Any] = None
     """
     The result of the header description query, which includes schema information.
     """
@@ -41,7 +38,7 @@ class FileSchemaResult(BaseModel):
     """
 
 
-async def _fetch_upload_record(upload_id: str) -> Optional[UploadModel]:
+async def _fetch_upload_record(upload_id: str) -> UploadModel:
     """
     Fetches the upload record from the database using the provided upload_id.
     Returns None if the record is not found or if an error occurs.
@@ -50,54 +47,66 @@ async def _fetch_upload_record(upload_id: str) -> Optional[UploadModel]:
         upload_uuid = uuid.UUID(upload_id)
     except ValueError:
         logger.error(f"Invalid UUID format for upload_id: {upload_id}")
-        return None
+        raise ValueError(f"Invalid UUID format for upload_id: {upload_id}") 
     
     except Exception as e:
         logger.error(f"Unexpected error while parsing upload_id {upload_id}: {e}", exc_info=True)
-        return None
+        raise ValueError(f"Unexpected error while parsing upload_id {upload_id}: {str(e)}")
 
     async with AsyncSessionLocal() as db:
         try:
             upload_record = await db.get(UploadModel, upload_uuid)
             if not upload_record:
                 logger.warning(f"Upload record not found for upload_id: {upload_uuid}")
-                return None
+                raise ValueError(f"Upload record not found for upload_id: {upload_uuid}")
             
             return upload_record
+        
+        except ValueError as ve:
+            logger.error(f"ValueError while fetching upload record for upload_id {upload_uuid}: {ve}")
+            raise ve
+
         except Exception as e:
             logger.error(f"Database error while fetching upload record for upload_id {upload_uuid}: {e}", exc_info=True)
-            return None
+            raise e
 
 async def _fetch_schema_from_db(upload_id: str):
     logger.info(f"Fetching schema from DB for upload_id: {upload_id}")
 
     try:
         upload_record = await _fetch_upload_record(upload_id)
-        if not upload_record:
-            raise ValueError(f"Upload record not found for upload_id: {upload_id}")
+
+        try:
+            logger.info(f"Upload record found for upload_id {upload_id}: {upload_record.storage_key}")
+
+            s3_uri = f"s3://{settings.r2_bucket_name}/{upload_record.storage_key}"
+
+            describe_query = "DESCRIBE SELECT * FROM read_parquet(?);"
+
+            with DuckDBConn() as duck_conn:
+                conn = duck_conn.conn
+                
+                if conn is None:
+                    raise ValueError("DuckDB connection is not established.")
+                
+                header_result = conn.execute(describe_query, (s3_uri,)).fetchall()
+
+                if not header_result:
+                    raise ValueError(f"No schema information found for upload_id: {upload_id}. The file might not be a valid Parquet file or is empty.")
+                
+                return FileSchemaResult(
+                    upload_id=upload_id,
+                    file_name=upload_record.file_name,
+                    header_result=header_result,
+                    error_message=None
+                )
+        except ValueError as ve:
+            logger.error(f"ValueError while querying upload_id: {upload_id} storage_key: {upload_record.storage_key}: {ve}")
+            raise ve
         
-        s3_uri = f"s3://{settings.r2_bucket_name}/{upload_record.storage_key}"
-
-        describe_query = "DESCRIBE SELECT * FROM read_parquet(?);"
-
-        with DuckDBConn() as duck_conn:
-
-            conn = duck_conn.conn
-            
-            if conn is None:
-                raise ValueError("DuckDB connection is not established.")
-            
-            header_result = conn.execute(describe_query, (s3_uri,)).fetchall()
-
-            if not header_result:
-                raise ValueError(f"No schema information found for upload_id: {upload_id}. The file might not be a valid Parquet file or is empty.")
-            
-            return FileSchemaResult(
-                upload_id=upload_id,
-                file_name=upload_record.file_name,
-                header_result=[dict(row) for row in header_result],
-                error_message=None
-            )
+        except Exception as e:
+            logger.error(f"Error while querying upload_id: {upload_id} storage_key: {upload_record.storage_key}: {e}", exc_info=True)
+            raise e
 
     except ValueError as ve:
         logger.error(f"ValueError while fetching upload record for upload_id {upload_id}: {ve}")

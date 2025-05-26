@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException
 from ..schema.chat import CreateChatReq, CreateChatResp, TestChatReq, TestChatResp
 from app.services.chat import ChatService
 from app.pipeline.modules.matrix import MatrixModule
-from app.pipeline.tools import FindRelevantDocuments, GetParquetFileSchemaTool
+from app.pipeline.tools import FindRelevantDocuments, GetParquetFileSchemaTool, QueryParquetFileUsingStorageKeyTool, QueryParquetFileUsingUploadIdTool
 
 router = APIRouter()
 
@@ -21,29 +21,53 @@ async def test_chat_service(req: TestChatReq):
     """
     Test the Chat DSPy Module.
     """
+    try:
 
-    chat_service = ChatService.create()
+        chat_service = ChatService.create()
 
-    tools = [
-        FindRelevantDocuments,
-        GetParquetFileSchemaTool
-    ]
+        tools = [
+            FindRelevantDocuments,
+            GetParquetFileSchemaTool,
+            QueryParquetFileUsingStorageKeyTool,
+            QueryParquetFileUsingUploadIdTool
+        ]
 
-    module = MatrixModule(session_id=chat_service.chat_id, tools = tools)
+        module = MatrixModule(session_id=chat_service.chat_id, tools = tools)
 
-    result = await module.aforward(user_query=req.user_query)
+        result = await module.aforward(user_query=req.user_query)
 
-    logger.info(f"Chat Service Test Result: {result}")
+        logger.info(f"Chat Service Test Result: {result}")
 
-    response = TestChatResp(
-        chat_id=chat_service.chat_id,
-        user_query=req.user_query,
-        final_answer=result.final_answer,
-        thought_process=result.thought_process,
-        thought_synthesis=result.thought_synthesis,
-    )
+        answer = result.answer
+        if not answer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No relevant documents found or query execution failed."
+            )
+        
+        logger.info(f"Answer: {answer}")
 
-    return response
+        response = TestChatResp(
+            chat_id=chat_service.chat_id,
+            user_query=req.user_query,
+            
+            answer=answer,
+            thought_process=result.thought_process,
+            reasoning=result.reasoning,
+        )
+
+        return response
+    
+    except HTTPException as e:
+        logger.error(f"HTTP Exception in test_chat_service: {e.detail}")
+        raise e
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in test_chat_service: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while processing the request."
+        )
 
 @router.post(
     "/create",

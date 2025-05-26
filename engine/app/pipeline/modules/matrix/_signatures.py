@@ -13,10 +13,14 @@ class PlanQuerySignature(dspy.Signature):
     user_query: str = dspy.InputField(desc="The user's current question or statement.")
     chat_history = dspy.InputField(desc="The history of the conversation.", T=dspy.History)
     available_tools_desc = dspy.InputField(desc="Description of available tools.")
+
+    previous_execution_results: str = dspy.InputField(
+        desc="Results of tool calls and their outputs/errors from the previous execution steps. This is used to track the progress and results of the plan execution, results are appended in the order of the plan execution.",
+    )
+
     feedback_on_previous_attempt = dspy.InputField(desc="Optional feedback from a previous execution cycle for this query.")
     
     # Output fields
-    thought_plan: str = dspy.OutputField(desc="Step-by-step thinking process for the plan.", prefix="plan_thought:")
     plan: List[DirectAnswerActionPlan | ToolActionPlan] = dspy.OutputField(desc="List of structured actions to execute as per the defined format, This should be a valid JSON list of ActionPlan objects.", prefix="plan:")
 
 
@@ -49,12 +53,6 @@ class ExecutePlanSignature(dspy.Signature):
         T=Union[DirectAnswerActionPlan, ToolActionPlan]
     )
 
-    # state: Literal['finishied', 'executing'] = dspy.OutputField(
-    #     desc="Indicates whether the plan execution is finished. 'finished' means all actions are executed and the final result is ready, 'executing' means there are still actions to be executed.",
-    #     prefix="state:",
-    #     T=Literal['finished', 'executing']
-    # )
-
 class ReflectionSignature(dspy.Signature):
     """
     Assess the results of the executed plan against the original query and chat history.
@@ -80,11 +78,9 @@ class SynthesizeResponseSignature(dspy.Signature):
     # Input fields
     original_user_query = dspy.InputField(desc="The user's original question.")
     chat_history = dspy.InputField(desc="The history of the conversation.", T=dspy.History)
-    plan_taken = dspy.InputField(desc="The final plan or sequence of plans that were executed.")
+    plan_reasoning = dspy.InputField(desc="The reasoning behind the plan that was executed, including the thought process and decisions made during planning.")
     execution_log_and_results = dspy.InputField(desc="Accumulated log of tools called and their outputs or observations.")
-    retrieved_information = dspy.InputField(desc="All relevant information gathered through tool execution.")
     synthesis_guidance_from_reflector = dspy.InputField(desc="Any specific guidance or notes from the reflection step to aid in synthesis.")
 
     # Output fields
-    thought_synthesis: str = dspy.OutputField(desc="Step-by-step thinking to synthesize the final answer from the gathered information.")
     final_result: FinalResult = dspy.OutputField(desc="The comprehensive answer to the user.")

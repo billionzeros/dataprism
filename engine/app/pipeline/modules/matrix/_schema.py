@@ -68,6 +68,8 @@ class Paragraph(BaseModel):
     Paragraph is a structured text block that can be used to represent a paragraph of text.
     It can be used to represent a paragraph of text in a document, a section of a report, or any other structured text block.
     """
+    __type__ = "paragraph"
+    
     text: str = Field(
         ...,
         description="The text of the paragraph."
@@ -78,6 +80,8 @@ class BulletPoint(BaseModel):
     BulletPoint is a structured text block that can be used to represent a bullet point in a list.
     It can be used to represent a bullet point in a document, a section of a report, or any other structured text block.
     """
+    __type__ = "bullet_point"
+
     text: str = Field(
         ...,
         description="The text of the bullet point."
@@ -88,6 +92,8 @@ class BarGraph(BaseModel):
     BarGraph is a structured representation of a bar graph.
     It can be used to represent a bar graph in a document, a section of a report, or any other structured text block.
     """
+    __type__ = "bar_graph"
+
     title: str = Field(
         ...,
         description="The title of the bar graph."
@@ -119,6 +125,8 @@ class LineGraph(BaseModel):
     LineGraph is a structured representation of a line graph.
     It can be used to represent a line graph in a document, a section of a report, or any other structured text block.
     """
+    __type__ = "line_graph"
+
     title: str = Field(
         ...,
         description="The title of the line graph."
@@ -149,6 +157,8 @@ class Table(BaseModel):
     Table is a structured representation of a table.
     It can be used to represent a table in a document, a section of a report, or any other structured text block.
     """
+    __type__ = "table"
+    
     title: str = Field(
         ...,
         description="The title of the table."
@@ -162,6 +172,22 @@ class Table(BaseModel):
         description="The rows of the table, where each row is a list of strings."
     )
 
+class ErrorMessage(BaseModel):
+    """
+    ErrorMessage is a structured representation of an error message.
+    It can be used to represent an error message in a document, a section of a report, or any other structured text block.
+    """
+    __type__ = "error_message"
+    
+    message: str = Field(
+        ...,
+        description="The error message text."
+    )
+    code: Optional[int] = Field(
+        default=None,
+        description="An optional error code associated with the error message."
+    )
+
 
 class FinalResult(BaseModel):
     """
@@ -171,7 +197,7 @@ class FinalResult(BaseModel):
     Using a List allows formatting the final result in different ways, such as a paragraph, bullet points, bar graph, line graph, or table.
     This allows for flexible representation of the final result, depending on the context and requirements.
     """
-    results: List[Union[Paragraph, BulletPoint, BarGraph, LineGraph, Table]] = Field(
+    results: List[Union[Paragraph, BulletPoint, BarGraph, LineGraph, Table, ErrorMessage]] = Field(
         ...,
         description="A list of different possible results such as Paragraph, BulletPoint, BarGraph, LineGraph, or Table."
     )

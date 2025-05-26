@@ -4,7 +4,7 @@ import inspect
 import dspy
 from typing import List, Any
 from app.utils import APP_LOGGER_NAME
-from ._schema import ToolExecutionResult, ToolActionPlan, DirectAnswerActionPlan
+from ._schema import ToolExecutionResult, ToolActionPlan, DirectAnswerActionPlan, FinalResult, Paragraph
 from ._signatures import PlanQuerySignature, ReflectionSignature, SynthesizeResponseSignature, ExecutePlanSignature
 
 logger = logging.getLogger(APP_LOGGER_NAME)
@@ -34,6 +34,11 @@ class MatrixModule(dspy.Module):
         This is useful to avoid infinite loops or excessive thinking time.
         """
 
+        self._max_tools_calls = 10
+        """
+        Maximum number of tool calls that can be made in a single thinking iteration.
+        """
+
         self._history = dspy.History(messages=[])
         """
         History for all the Messages in the Chat
@@ -45,7 +50,7 @@ class MatrixModule(dspy.Module):
         Responsible for the first interation with the user and plan the next step of answer it the best way possible
         """
 
-        self._execution = dspy.ChainOfThought(ExecutePlanSignature)
+        self._execution = dspy.Predict(ExecutePlanSignature)
         """
         Execution module that handles the execution of the tools based on the actions planned by the planner.
         It is responsible for executing the tools and returning the results.
@@ -170,7 +175,6 @@ class MatrixModule(dspy.Module):
 
             logger.info(f"Executing tool '{action.tool_name}' with args: {tool_args}")
 
-            # Result variable to hold the execution result
             result = None
             if not inspect.isfunction(tool.func) and not inspect.ismethod(tool.func):
                 logger.error(f"Tool '{action.tool_name}' does not have a callable function. It is likely not properly registered.")
@@ -182,7 +186,6 @@ class MatrixModule(dspy.Module):
                 )
 
             if inspect.iscoroutinefunction(tool.func) or inspect.isawaitable(tool.func):
-                # If the tool function is async, we need to await it
                 logger.info(f"Tool '{action.tool_name}' is an async function, awaiting execution.")
                 result = await tool.func(**tool_args)
             else:
@@ -213,17 +216,15 @@ class MatrixModule(dspy.Module):
         """
         Accumulated log of tool calls and their outputs/errors from the recent execution.
         """
-        accumulated_retrieved_info_str = ""
-        """
-        All relevant information gathered through tool execution.
-        """
-        current_plan_str = "No plan yet."
-        """
-        Current plan of action, which is a list of actions to be taken.
-        """
         feedback_for_planner = "No feedback provided."
         """
         Feedback for the planner, which is used to improve the planning process.
+        """
+
+        plan_reasoning = "No reasoning provided."
+        """
+        Reasoning for the plan, which is used to understand the planner's thought process.
+        This is used to provide context for the planner's decisions and actions.
         """
 
         # Plans the thoughts after each iteration
@@ -233,6 +234,8 @@ class MatrixModule(dspy.Module):
 
         for i in range(self._max_thinking_iterations):
             iteration_log: dict[str, str | int] = {"iteration": i + 1}
+            execution_results: List[Any] = []
+
 
             logger.info(f"Thinking iteration {i + 1} of {self._max_thinking_iterations}")
             logger.info("Stage 1: Planning")
@@ -240,6 +243,7 @@ class MatrixModule(dspy.Module):
             planner_input = {
                 "user_query": user_query,
                 "chat_history": self._history,
+                "previous_execution_results": accumulated_execution_log_str,
                 "available_tools_desc": self._tools_desc,
             }
 
@@ -249,6 +253,7 @@ class MatrixModule(dspy.Module):
             try:
                 planner_output = self._planner(**planner_input)
                 current_plan: List[ToolActionPlan | DirectAnswerActionPlan] = planner_output.plan
+                plan_reasoning = planner_output.reasoning
 
             except Exception as e:
                 logger.error(f"Error during Planner stage: {e}", exc_info=True)
@@ -269,8 +274,6 @@ class MatrixModule(dspy.Module):
                 iteration_log["guidance_for_next_step"] = "Synthesize based on planner's direct answer."
                 turn_thought_log["iterations"].append(iteration_log)
                 break
-        
-            execution_results: List[Any] = []
 
             if current_plan:
                 logger.info("Executing plan...", )
@@ -281,12 +284,11 @@ class MatrixModule(dspy.Module):
                     "action_results": execution_results,
                 }
 
-                max_tool_calls = 10
                 finished = False
                 while not finished:
-                    if len(execution_results) >= max_tool_calls:
-                        logger.warning(f"Reached maximum tool calls limit ({max_tool_calls}). Stopping execution.")
-                        execution_results.append(f"Reached maximum tool calls limit, max_tool_calls = {max_tool_calls}")
+                    if len(execution_results) >= self._max_tools_calls:
+                        logger.warning(f"Reached maximum tool calls limit ({self._max_tools_calls}). Stopping execution.")
+                        execution_results.append(f"Reached maximum tool calls limit, max_tool_calls = {self._max_tools_calls}")
                         break
 
                     execution_output = self._execution(**execution_input)
@@ -295,11 +297,17 @@ class MatrixModule(dspy.Module):
                     if next_action is None:
                         logger.info("All actions in the plan have been executed.")
                         finished = True
-                        continue
+                        break
 
                     if isinstance(next_action, ToolActionPlan):
                         tool_result = await self._parse_and_execute_tool_call(execution_output.next_action)
                         execution_results.append(tool_result)
+
+                        if tool_result.error:
+                            logger.error(f"Error Executing tool '{tool_result.tool_name}': {tool_result.error}")
+                            execution_results.append(f"Error executing tool '{tool_result.tool_name}': {tool_result.error}")
+                            finished = True
+                            break
 
                     elif isinstance(next_action, DirectAnswerActionPlan):
                         log_entry = f"Action: answer_directly. Content: {next_action.answer_text}"
@@ -325,19 +333,18 @@ class MatrixModule(dspy.Module):
                 reflection_input = {
                     "original_user_query": user_query,
                     "chat_history": self._history,
-                    "executed_plan": current_plan_str,
+                    "executed_plan": str(current_plan),
                     "execution_log_and_results": accumulated_execution_log_str,
                 }
 
                 reflector_output = self._reflector(**reflection_input)
-
+                logger.info(f"Reflection Assessment Output: {reflector_output}")
+                
+                # Logging the reflection output
                 iteration_log["reflection_thought"] = reflector_output.assessment_thought
                 iteration_log["next_step_decision"] = reflector_output.next_step_decision
                 iteration_log["guidance_for_next_step"] = reflector_output.guidance_for_next_step
 
-                logger.info(f"Reflection thought: {reflector_output.assessment_thought}")
-                logger.info(f"Next step decision: {reflector_output.next_step_decision}")
-                logger.info(f"Guidance for next step: {reflector_output.guidance_for_next_step}")
 
                 if reflector_output.next_step_decision == "ANSWER_WITH_SYNTHESIS":
                         logger.info("ANSWER_WITH_SYNTHESIS decision made, moving to Synthesis.")
@@ -365,9 +372,8 @@ class MatrixModule(dspy.Module):
         synthesis_input = {
             "original_user_query": user_query,
             "chat_history": self._history,
-            "plan_taken": current_plan_str,
+            "plan_reasoning": plan_reasoning,
             "execution_log_and_results": accumulated_execution_log_str,
-            "retrieved_information": accumulated_retrieved_info_str,
             "synthesis_guidance_from_reflector": turn_thought_log["iterations"][-1].get("guidance_for_next_step", "Synthesize the best possible answer with available information."),
         }
 
@@ -381,13 +387,20 @@ class MatrixModule(dspy.Module):
 
         if not result:
             logger.warning("Synthesis did not return a final result. Returning a default message.")
-            result = "I was unable to synthesize a final answer based on the gathered information. Please try rephrasing your query or providing more context."
+            result = FinalResult(
+                results=[Paragraph(text="No valid result was synthesized. Please try rephrasing your query.")],
+            )
 
-        logger.info(f"Synthesizer Thought: {synthesis.thought_synthesis}")
-        logger.info(f"Final Answer: {str(result)}")
+        if not isinstance(result, FinalResult):
+            logger.error(f"Expected FinalResult, but got {type(result)}. Returning a default message.")
+            result = FinalResult(
+                results=[Paragraph(text="An error occurred during synthesis. Please try rephrasing your query.")],
+            )
 
         return dspy.Prediction(
-            final_result=synthesis.final_result,
+            answer=result.results,
+            reasoning=synthesis.reasoning,
             thought_process=turn_thought_log,
-            thought_synthesis=synthesis.thought_synthesis,
         )
+    
+    
