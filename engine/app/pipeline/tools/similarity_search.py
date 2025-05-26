@@ -1,31 +1,119 @@
 import logging
 import dspy
+from pydantic import BaseModel
 from sqlalchemy import select
 from app.utils import APP_LOGGER_NAME
-from typing import Optional, Sequence
-from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel
+from typing import List, Optional
 from app.db.session import AsyncSessionLocal
-
+from app.pipeline.utils.embeddings import Embedder
+from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
-async def similarity_search(query_embedding: list[float], k: int = 5, additional_filters: Optional[dict] = None) -> Sequence[EmbeddingModel]: # query_embedding type hint fixed
+class DocumentSimilaritySeachResult(BaseModel):
     """
-    Based on the embedding, find the most simialr embeddings in the Database
+    Represents the result of a document similarity search.
+    Contains the ID and embedding of the most similar document.
+    """
+    id: str
+    
+    source_type: str
+    """
+    Source type of the embedding, such as 'document', 'block', 'csv', etc.
+    """
+    source_identifier: str
+    """
+    Source identifier of the embedding, such as a `upload_id` for documents,
+    """
+    related_id: Optional[str] = None
+    """
+    Related ID of the embedding, if applicable.
+    """
+    column_or_chunk_name: Optional[str] = None
+    """
+    Column or chunk name of the embedding, if applicable.
+    """
+    original_text: Optional[str] = None
+    """
+    Original text of the embedding, if available.
+    """
+
+async def generate_query_embedding(query: str) -> List[float]:
+    """
+    Generates a vector embedding for a given text query.
+
+    Args:
+        query: The text query to generate an embedding for.
+
+    Returns:
+        A list of floats representing the embedding of the query.
+
+    Raises:
+        ValueError: If the query is invalid, or if embedding generation fails
+                    or returns an unexpected format.
+    """
+    logger.info(f"Generating embedding for query: '{query}'")
+    if not query or not isinstance(query, str):
+        logger.error("Invalid query provided. Must be a non-empty string.")
+        raise ValueError("Query must be a non-empty string.")
+
+    try:
+        embedder = Embedder() 
+        
+        embeddings_response = embedder.generate_embeddings(content=[query])
+
+        if embeddings_response is None:
+            logger.error(f"Embedder failed to generate embeddings for query: '{query}'. Received None.")
+            raise ValueError("Failed to generate embedding for the query due to an internal embedder error.")
+
+        if not embeddings_response or len(embeddings_response) == 0:
+            logger.error(f"Embedder returned an empty list of embeddings for query: '{query}'.")
+            raise ValueError("Failed to generate embedding: embedder returned no embeddings.")
+
+        embedding_object = embeddings_response[0]
+
+        if not hasattr(embedding_object, 'values'):
+            logger.error(f"Generated embedding object for query '{query}' does not have 'values' attribute.")
+            raise ValueError("Generated embedding object is malformed (missing 'values' attribute).")
+
+        embedding_values = embedding_object.values
+
+        if not isinstance(embedding_values, list) or not all(isinstance(v, (float, int)) for v in embedding_values):
+            logger.error(f"Generated embedding values for query '{query}' are not in the expected List[float] format: {embedding_values}")
+            raise ValueError("Generated embedding values are not in the expected List[float] format.")
+        
+        final_embedding = [float(v) for v in embedding_values]
+
+        logger.info(f"Successfully generated embedding for query: '{query}', length: {len(final_embedding)}")
+        return final_embedding
+
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during query embedding generation for '{query}': {e}", exc_info=True)
+        raise ValueError(f"An unexpected error occurred while generating embedding: {e}")
+
+
+
+async def similarity_search(query_str: str, k: int = 5, additional_filters: Optional[dict] = None) -> List[DocumentSimilaritySeachResult]:
+    """
+    Based on the query string, find the most simialr embeddings in the Database
     and return the top k most similar embeddings.
 
     Args:
-        - query_embedding: The embedding to search for, must be a list of floats.
+        - query_str: The query string to search for similar embeddings, using the most detailed query string results in better results.
         - k: The number of similar embeddings to return.
         - additional_filters: Optional filters to apply to the search.
     """
 
-    logger.info(f"Starting similarity search with query_embedding: {query_embedding}, k: {k}, additional_filters: {additional_filters}")
+    logger.info(f"Starting similarity search with query_str: {query_str}, k: {k}, additional_filters: {additional_filters}")
+
+    embedding = await generate_query_embedding(query_str)
 
     # Input validation
-    if not query_embedding or not isinstance(query_embedding, list) or not all(isinstance(val, float) for val in query_embedding):
-        logger.error("Invalid query_embedding provided. Must be a list of floats.")
-        raise ValueError("query_embedding must be a non-empty list of floats.")
+    if not embedding or not isinstance(embedding, list) or not all(isinstance(val, float) for val in embedding):
+        logger.error("Invalid embedding provided. Must be a list of floats.")
+        raise ValueError("embedding must be a non-empty list of floats.")
 
     if not isinstance(k, int) or k <= 0:
         logger.error(f"Invalid k value: {k}. Must be a positive integer.")
@@ -43,16 +131,28 @@ async def similarity_search(query_embedding: list[float], k: int = 5, additional
                         logger.warning(f"Invalid filter key: {key}. Skipping this filter.")
 
 
-            stmt = stmt.order_by(EmbeddingModel.embedding.distance(query_embedding)).limit(k)
+            stmt = stmt.order_by(EmbeddingModel.embedding.cosine_distance(embedding)).limit(k) 
             
             result = await db.execute(stmt)
             similar_embeddings = result.scalars().all()
 
-            return similar_embeddings
+            logger.info(f"Found {len(similar_embeddings)} similar embeddings for query_str: '{query_str}'")
+
+            search_result: List[DocumentSimilaritySeachResult] = [
+                DocumentSimilaritySeachResult(
+                    id=str(embedding.id),
+                    source_type=embedding.source_type.value,
+                    source_identifier=embedding.source_identifier,
+                    related_id=embedding.related_id,
+                    column_or_chunk_name=embedding.column_or_chunk_name,
+                    original_text=embedding.original_text
+                ) for embedding in similar_embeddings
+            ]
+
+            return search_result
         
         except Exception as e:
             logger.error(f"Error during similarity search database operation: {e}", exc_info=True)
-            # Return empty list on error as per original behavior for dspy.Tool
             return []
     
 DocumentSimilaritySearchTool = dspy.Tool(
@@ -60,11 +160,10 @@ DocumentSimilaritySearchTool = dspy.Tool(
     desc="Find the most similar documents based on the provided embedding.",
     func=similarity_search,
     args={
-        "query_embedding": dspy.InputField(
-            name="query_embedding",
-            desc="The embedding to search for, can be a list of floats or a single float for search.",
-            type=Sequence[float],
-            default=[],
+        "query_str": dspy.InputField(
+            name="query_str",
+            desc="The query string to search for similar embeddings. Using a detailed query string results in better results.",
+            type=str,
         ),
         "k": dspy.InputField(
             name="k",
@@ -81,12 +180,12 @@ DocumentSimilaritySearchTool = dspy.Tool(
         ),
     },
     arg_types={
-        "query_embedding": Sequence[float],
+        "query_str": str,
         "additional_filters": Optional[dict],
         "k": int,
     },
     arg_desc={
-        "query_embedding": "The embedding to search for, can be a list of floats or a single float for search.",
+        "query_str": "The query string to search for similar embeddings. Using a detailed query string results in better results.",
         "k": "The number of similar embeddings to return.",
         "additional_filters": "Optional filters to apply to the search."
     }

@@ -21,6 +21,7 @@ async def generate_query_embedding(query: str) -> List[float]:
         ValueError: If the query is invalid, or if embedding generation fails
                     or returns an unexpected format.
     """
+    logger.info(f"Generating embedding for query: '{query}'")
     if not query or not isinstance(query, str):
         logger.error("Invalid query provided. Must be a non-empty string.")
         raise ValueError("Query must be a non-empty string.")
@@ -52,7 +53,7 @@ async def generate_query_embedding(query: str) -> List[float]:
         
         final_embedding = [float(v) for v in embedding_values]
 
-        logger.info(f"Successfully generated embedding for query: '{query}'")
+        logger.info(f"Successfully generated embedding for query: '{query}', length: {len(final_embedding)}")
         return final_embedding
 
     except ValueError:

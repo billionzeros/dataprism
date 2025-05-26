@@ -1,9 +1,11 @@
 import logging
 import uuid
+import inspect
 import dspy
 from typing import List, Any
 from app.utils import APP_LOGGER_NAME
-from ._schema import PlanQuerySignature, ReflectionSignature, SynthesizeResponseSignature, ToolActionPlan, DirectAnswerActionPlan
+from ._schema import ToolExecutionResult, ToolActionPlan, DirectAnswerActionPlan
+from ._signatures import PlanQuerySignature, ReflectionSignature, SynthesizeResponseSignature, ExecutePlanSignature
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -41,6 +43,12 @@ class MatrixModule(dspy.Module):
         self._planner = dspy.ChainOfThought(PlanQuerySignature)
         """
         Responsible for the first interation with the user and plan the next step of answer it the best way possible
+        """
+
+        self._execution = dspy.ChainOfThought(ExecutePlanSignature)
+        """
+        Execution module that handles the execution of the tools based on the actions planned by the planner.
+        It is responsible for executing the tools and returning the results.
         """
 
         self._reflector = dspy.ChainOfThought(ReflectionSignature)
@@ -126,8 +134,7 @@ class MatrixModule(dspy.Module):
 
         return "\n".join(descriptions) if descriptions else "No tools available."
     
-
-    async def _parse_and_execute_tool_call(self, action: ToolActionPlan):
+    async def _parse_and_execute_tool_call(self, action: ToolActionPlan) -> ToolExecutionResult:
         """
         Parse and Execute a Tool based on the action provided in the function and return the result.
 
@@ -139,9 +146,13 @@ class MatrixModule(dspy.Module):
         """
         if action.tool_name not in self._available_tools: 
             logger.error(f"Tool '{action.tool_name}' not found. Available tools: {list(self._available_tools.keys())}")
-            return {"error": f"Tool '{action.tool_name}' not found", "output": None}
+            return ToolExecutionResult(
+                tool_name=action.tool_name,
+                tool_args=action.tool_args,
+                result=None,
+                error=f"Tool '{action.tool_name}' not found in available tools."
+            )
         
-
         tool = self._available_tools[action.tool_name]
         tool_args: dict[str, Any] = {}
 
@@ -149,10 +160,7 @@ class MatrixModule(dspy.Module):
             if isinstance(action.tool_args, dict):
                 tool_args = action.tool_args
             
-            elif action.tool_args is None:
-                logger.info("Action Tool Args is None")
-            
-            elif not isinstance(action.tool_args, dict):
+            elif action.tool_args is not None and not isinstance(action.tool_args, dict):
                 logger.warning(
                     f"Tool '{action.tool_name}' received tool_args as a string: '{action.tool_args}'. "
                     f"This system expects tool arguments as a dictionary for keyword passing. "
@@ -161,14 +169,42 @@ class MatrixModule(dspy.Module):
                 )
 
             logger.info(f"Executing tool '{action.tool_name}' with args: {tool_args}")
-            result = await tool.func(**tool_args)
 
-            return {"tool_name": action.tool_name, "args": action.tool_args, "output": result}
+            # Result variable to hold the execution result
+            result = None
+            if not inspect.isfunction(tool.func) and not inspect.ismethod(tool.func):
+                logger.error(f"Tool '{action.tool_name}' does not have a callable function. It is likely not properly registered.")
+                return ToolExecutionResult(
+                    tool_name=action.tool_name,
+                    tool_args=tool_args,
+                    result=None,
+                    error=f"Tool '{action.tool_name}' does not have a callable function."
+                )
+
+            if inspect.iscoroutinefunction(tool.func) or inspect.isawaitable(tool.func):
+                # If the tool function is async, we need to await it
+                logger.info(f"Tool '{action.tool_name}' is an async function, awaiting execution.")
+                result = await tool.func(**tool_args)
+            else:
+                logger.info(f"Tool '{action.tool_name}' is a sync function, calling directly.")
+                result = tool.func(**tool_args)
+
+            return ToolExecutionResult(
+                tool_name=action.tool_name,
+                tool_args=tool_args,
+                result=result,
+                error=None
+            )
 
         except Exception as e:
             logger.error(f"Error executing tool '{action}': {e}")
 
-            return {"tool_name": action.tool_name, "args": tool_args, "error": str(e)}
+            return ToolExecutionResult(
+                tool_name=action.tool_name,
+                tool_args=tool_args,
+                result=None,
+                error=str(e)
+            )
         
     
         
@@ -221,49 +257,68 @@ class MatrixModule(dspy.Module):
                 final_answer = "I encountered an issue while planning how to respond. Please try rephrasing your query."
                 return dspy.Prediction(final_answer=final_answer, full_thought_process=turn_thought_log)
 
-            logger.info(f"Cuurrent Plan (Iter {i+1}): {current_plan}")
+            logger.info(f"Current Plan (Iter {i+1}): {current_plan}")
+
 
             logger.info("Stage 2: Reflection")
-            current_execution_log_entries = []
-            current_retrieved_info_list = []
-
-            if current_plan:
-                logger.info("Executing plan...", )
-                for action in current_plan:
-                    logger.info(f"Executing action: {action}")
-                    if isinstance(action, ToolActionPlan):
-                        tool_result = await self._parse_and_execute_tool_call(action)
-                        logger.info("Tool Result", tool_result)
-                        current_execution_log_entries.append(tool_result)
-                        if tool_result.get("output"):
-                            current_retrieved_info_list.append(str(tool_result["output"]))
-
-                        elif tool_result.get("error"):
-                            current_retrieved_info_list.append(f"Error from {tool_result.get('tool_name','unknown tool')}: {tool_result['error']}")
-
-                    elif isinstance(action, DirectAnswerActionPlan):
-                        log_entry = f"Action: answer_directly. Content: {action.answer_text}"
-                        current_execution_log_entries.append(log_entry)
-                        current_retrieved_info_list.append(f"Planner decided to answer directly: {action.answer_text}")
-                    
-                    else:
-                        current_execution_log_entries.append(f"Unknown action: {action}")
-            else:
-                current_execution_log_entries.append("Planner generated an empty plan.")
-
-            current_execution_log_str = "\n".join(current_execution_log_entries)
-            iteration_log["execution_log"] = current_execution_log_str
-            accumulated_execution_log_str += f"\n--- Iteration {i+1} Execution ---\n" + current_execution_log_str
-            accumulated_retrieved_info_str += "\n" + "\n".join(current_retrieved_info_list) if current_retrieved_info_list else ""
-            logger.info(f"Execution Log (Iter {i+1}):\n{current_execution_log_str}")
-
             if any(isinstance(action, DirectAnswerActionPlan) for action in current_plan) and i == 0 and not any(isinstance(action, ToolActionPlan) for action in current_plan):
                 logger.info("Planner suggests direct answer without tool use, moving to Synthesis.")
+                
                 iteration_log["reflection_thought"] = "Skipped due to direct answer plan."
                 iteration_log["next_step_decision"] = "ANSWER_WITH_SYNTHESIS"
                 iteration_log["guidance_for_next_step"] = "Synthesize based on planner's direct answer."
                 turn_thought_log["iterations"].append(iteration_log)
                 break
+        
+            execution_results: List[Any] = []
+
+            if current_plan:
+                logger.info("Executing plan...", )
+                
+                execution_input = {
+                    "plan": current_plan,
+                    "available_tools_desc": self._tools_desc,
+                    "action_results": execution_results,
+                }
+
+                max_tool_calls = 10
+                finished = False
+                while not finished:
+                    if len(execution_results) >= max_tool_calls:
+                        logger.warning(f"Reached maximum tool calls limit ({max_tool_calls}). Stopping execution.")
+                        execution_results.append(f"Reached maximum tool calls limit, max_tool_calls = {max_tool_calls}")
+                        break
+
+                    execution_output = self._execution(**execution_input)
+                    next_action = execution_output.next_action
+
+                    if next_action is None:
+                        logger.info("All actions in the plan have been executed.")
+                        finished = True
+                        continue
+
+                    if isinstance(next_action, ToolActionPlan):
+                        tool_result = await self._parse_and_execute_tool_call(execution_output.next_action)
+                        execution_results.append(tool_result)
+
+                    elif isinstance(next_action, DirectAnswerActionPlan):
+                        log_entry = f"Action: answer_directly. Content: {next_action.answer_text}"
+                        execution_results.append(log_entry)                
+                    else:
+                        logger.error(f"Unknown action type: {next_action}")
+                        execution_results.append(f"Unknown action: {next_action}")
+            else:
+                logger.error("Planner generated an empty plan.")
+                execution_results.append("Planner generated an empty plan.")
+
+            execution_result_str = "\n".join(
+                f"Tool: {result.tool_name}, Args: {result.tool_args}, Result: {result.result}, Error: {result.error}"
+                for result in execution_results if isinstance(result, ToolExecutionResult)
+            )
+
+            # Accumulate retrieved information for future steps
+            iteration_log["execution_log"] = execution_result_str
+            accumulated_execution_log_str += f"\n--- Iteration {i+1} Execution ---\n" + execution_result_str
 
             if i < self._max_thinking_iterations - 1:
                 logger.info("Stage 3: Reflection")
@@ -322,14 +377,17 @@ class MatrixModule(dspy.Module):
 
         logger.info(f"Final Synthesis: {synthesis}")
 
-        final_answer = str(synthesis.final_answer)
+        result = synthesis.final_result
+
+        if not result:
+            logger.warning("Synthesis did not return a final result. Returning a default message.")
+            result = "I was unable to synthesize a final answer based on the gathered information. Please try rephrasing your query or providing more context."
 
         logger.info(f"Synthesizer Thought: {synthesis.thought_synthesis}")
-        logger.info(f"Final Answer: {final_answer}")
-
+        logger.info(f"Final Answer: {str(result)}")
 
         return dspy.Prediction(
-            final_answer=final_answer,
+            final_result=synthesis.final_result,
             thought_process=turn_thought_log,
             thought_synthesis=synthesis.thought_synthesis,
         )

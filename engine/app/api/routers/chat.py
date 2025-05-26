@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException
 from ..schema.chat import CreateChatReq, CreateChatResp, TestChatReq, TestChatResp
 from app.services.chat import ChatService
 from app.pipeline.modules.matrix import MatrixModule
-from app.pipeline.tools import DocumentSimilaritySearchTool, QueryEmbeddingGeneratorTool
+from app.pipeline.tools import DocumentSimilaritySearchTool
 
 router = APIRouter()
 
@@ -26,7 +26,6 @@ async def test_chat_service(req: TestChatReq):
 
     tools = [
         DocumentSimilaritySearchTool,
-        QueryEmbeddingGeneratorTool,
     ]
 
     module = MatrixModule(session_id=chat_service.chat_id, tools = tools)

@@ -1,4 +1,3 @@
-import dspy
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Union, Dict, Any
 
@@ -33,8 +32,7 @@ class ToolActionPlan(BaseModel):
     - {"tool_name": "get_weather", "tool_args": {"city": "London"}}
     - {"tool_name": "database_query", "tool_args": {query: "SELECT name FROM users WHERE id = 10;"}}
     """
-    tool_name: Optional[str] = Field(
-        default=None,
+    tool_name: str = Field(
         description="If action_type is 'call_tool', this is the name of the tool to be invoked (e.g., 'SearchEmbedding', get_weather', 'calculator', )."
     )
 
@@ -43,54 +41,137 @@ class ToolActionPlan(BaseModel):
         description="If action_type is 'call_tool', this is the input for the tool. It can be a dictionary of parameters (e.g., {'query': '...', 'limit': 10}) or a single string argument."
     )
 
-
-class PlanQuerySignature(dspy.Signature):
+class ToolExecutionResult(BaseModel):
     """
-    Given the user query, chat history, available tools, and optional feedback from a previous attempt,
-    understand the query, create a step-by-step plan, and identify tool calls.
-    Plan actions: 'call_tool(<tool_name>, <tool_input>)' or 'answer_directly(<summary>)'.
+    ToolExecutionResult is a structured representation of the result of a tool call.
+    It can be used to represent the result of a tool call in a document, a section of a report, or any other structured text block.
     """
-    # Input fields
-    user_query: str = dspy.InputField(desc="The user's current question or statement.")
-    chat_history = dspy.InputField(desc="The history of the conversation.", T=dspy.History)
-    available_tools_desc = dspy.InputField(desc="Description of available tools.")
-    feedback_on_previous_attempt = dspy.InputField(desc="Optional feedback from a previous execution cycle for this query.")
-    
-    # Output fields
-    thought_plan: str = dspy.OutputField(desc="Step-by-step thinking process for the plan.", prefix="plan_thought:")
-    plan: List[DirectAnswerActionPlan | ToolActionPlan] = dspy.OutputField(desc="List of structured actions to execute as per the defined format, This should be a valid JSON list of ActionPlan objects.", prefix="plan:")
+    tool_name: str = Field(
+        ...,
+        description="The name of the tool that was called."
+    )
+    tool_args: Optional[Union[Dict[str, Any], str]] = Field(
+        default=None,
+        description="The input arguments that were passed to the tool."
+    )
+    result: Any = Field(
+        ...,
+        description="The result of the tool call. This can be any type of data, depending on the tool's output."
+    )
+    error: Optional[str] = Field(
+        default=None,
+        description="An optional error message if the tool call failed."
+    )
+
+class Paragraph(BaseModel):
+    """
+    Paragraph is a structured text block that can be used to represent a paragraph of text.
+    It can be used to represent a paragraph of text in a document, a section of a report, or any other structured text block.
+    """
+    text: str = Field(
+        ...,
+        description="The text of the paragraph."
+    )
+
+class BulletPoint(BaseModel):
+    """
+    BulletPoint is a structured text block that can be used to represent a bullet point in a list.
+    It can be used to represent a bullet point in a document, a section of a report, or any other structured text block.
+    """
+    text: str = Field(
+        ...,
+        description="The text of the bullet point."
+    )
+
+class BarGraph(BaseModel):
+    """
+    BarGraph is a structured representation of a bar graph.
+    It can be used to represent a bar graph in a document, a section of a report, or any other structured text block.
+    """
+    title: str = Field(
+        ...,
+        description="The title of the bar graph."
+    )
+
+    x_axis_label: str = Field(
+        ...,
+        description="The label for the x-axis of the bar graph."
+    )
+    y_axis_label: str = Field(
+        ...,
+        description="The label for the y-axis of the bar graph."
+    )
+    x_axis_type: Literal['categorical', 'numerical'] = Field(
+        default='categorical',
+        description="The type of the x-axis. Can be 'categorical' or 'numerical'. Defaults to 'categorical'."
+    )
+    y_axis_type: Literal['categorical', 'numerical'] = Field(
+        default='numerical',
+        description="The type of the y-axis. Can be 'categorical' or 'numerical'. Defaults to 'numerical'."
+    )
+    color: Optional[str] = Field(
+        default=None,
+        description="The color of the bars in the bar graph. If not provided, a default color will be used."
+    )
+
+class LineGraph(BaseModel):
+    """
+    LineGraph is a structured representation of a line graph.
+    It can be used to represent a line graph in a document, a section of a report, or any other structured text block.
+    """
+    title: str = Field(
+        ...,
+        description="The title of the line graph."
+    )
+    x_axis_label: str = Field(
+        ...,
+        description="The label for the x-axis of the line graph."
+    )
+    y_axis_label: str = Field(
+        ...,
+        description="The label for the y-axis of the line graph."
+    )
+    x_axis_type: Literal['categorical', 'numerical'] = Field(
+        default='categorical',
+        description="The type of the x-axis. Can be 'categorical' or 'numerical'. Defaults to 'categorical'."
+    )
+    y_axis_type: Literal['categorical', 'numerical'] = Field(
+        default='numerical',
+        description="The type of the y-axis. Can be 'categorical' or 'numerical'. Defaults to 'numerical'."
+    )
+    color: Optional[str] = Field(
+        default=None,
+        description="The color of the line in the line graph. If not provided, a default color will be used."
+    )
+
+class Table(BaseModel):
+    """
+    Table is a structured representation of a table.
+    It can be used to represent a table in a document, a section of a report, or any other structured text block.
+    """
+    title: str = Field(
+        ...,
+        description="The title of the table."
+    )
+    headers: List[str] = Field(
+        ...,
+        description="The headers of the table."
+    )
+    rows: List[List[str]] = Field(
+        ...,
+        description="The rows of the table, where each row is a list of strings."
+    )
 
 
-class ReflectionSignature(dspy.Signature):
+class FinalResult(BaseModel):
     """
-    Assess the results of the executed plan against the original query and chat history.
-    Decide if the information is sufficient, if replanning is needed, or if we can proceed to synthesize an answer.
-    """
-    # Input fields
-    original_user_query = dspy.InputField(desc="The user's original question for this turn.")
-    chat_history = dspy.InputField(desc="The overall conversation history.", T=dspy.History)
-    executed_plan = dspy.InputField(desc="The plan that was just executed in the current iteration.")
-    execution_log_and_results = dspy.InputField(desc="Log of tool calls and their outputs/errors from the recent execution.")
+    FinalResult is an List of Different Possible Results such as Paragraph, BulletPoint, BarGraph, LineGraph, or Table.
+    It can be used to represent the final result of a query, a section of a report, or any other structured text block.
 
-    # Output fields
-    assessment_thought: str = dspy.OutputField(desc="Detailed reasoning about the sufficiency, relevance, and quality of the gathered information in relation to the user's query. Identify gaps or issues.")
-    next_step_decision: Literal['ANSWER_WITH_SYNTHESIS', 'REPLAN_AND_EXECUTE'] = dspy.OutputField(desc="Choose one: 'ANSWER_WITH_SYNTHESIS' (if info is sufficient or max attempts reached), or 'REPLAN_AND_EXECUTE' (if more/different actions are needed).")
-    guidance_for_next_step: str = dspy.OutputField(desc="If 'REPLAN_AND_EXECUTE', provide specific feedback/suggestions for the planner. If 'ANSWER_WITH_SYNTHESIS', briefly note key points to focus on for the synthesizer or confirm sufficiency.")
-
-class SynthesizeResponseSignature(dspy.Signature):
+    Using a List allows formatting the final result in different ways, such as a paragraph, bullet points, bar graph, line graph, or table.
+    This allows for flexible representation of the final result, depending on the context and requirements.
     """
-    Given the original query, chat history, the final plan, the log of tool actions and their outputs,
-    and retrieved information, synthesize a comprehensive final answer for the user.
-    If the retrieved information is insufficient, note what's missing.
-    """
-    # Input fields
-    original_user_query = dspy.InputField(desc="The user's original question.")
-    chat_history = dspy.InputField(desc="The history of the conversation.", T=dspy.History)
-    plan_taken = dspy.InputField(desc="The final plan or sequence of plans that were executed.")
-    execution_log_and_results = dspy.InputField(desc="Accumulated log of tools called and their outputs or observations.")
-    retrieved_information = dspy.InputField(desc="All relevant information gathered through tool execution.")
-    synthesis_guidance_from_reflector = dspy.InputField(desc="Any specific guidance or notes from the reflection step to aid in synthesis.")
-
-    # Output fields
-    thought_synthesis: str = dspy.OutputField(desc="Step-by-step thinking to synthesize the final answer from the gathered information.")
-    final_answer: str = dspy.OutputField(desc="The comprehensive answer to the user.")
+    results: List[Union[Paragraph, BulletPoint, BarGraph, LineGraph, Table]] = Field(
+        ...,
+        description="A list of different possible results such as Paragraph, BulletPoint, BarGraph, LineGraph, or Table."
+    )
