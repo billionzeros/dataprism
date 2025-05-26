@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException
 from ..schema.chat import CreateChatReq, CreateChatResp, TestChatReq, TestChatResp
 from app.services.chat import ChatService
 from app.pipeline.modules.matrix import MatrixModule
-from app.pipeline.tools import DocumentSimilaritySearchTool
+from app.pipeline.tools import FindRelevantDocuments, GetParquetFileSchemaTool
 
 router = APIRouter()
 
@@ -25,7 +25,8 @@ async def test_chat_service(req: TestChatReq):
     chat_service = ChatService.create()
 
     tools = [
-        DocumentSimilaritySearchTool,
+        FindRelevantDocuments,
+        GetParquetFileSchemaTool
     ]
 
     module = MatrixModule(session_id=chat_service.chat_id, tools = tools)

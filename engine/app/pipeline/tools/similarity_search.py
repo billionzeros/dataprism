@@ -10,7 +10,7 @@ from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
-class DocumentSimilaritySeachResult(BaseModel):
+class FindRelevantDocumentResult(BaseModel):
     """
     Represents the result of a document similarity search.
     Contains the ID and embedding of the most similar document.
@@ -95,7 +95,7 @@ async def generate_query_embedding(query: str) -> List[float]:
 
 
 
-async def similarity_search(query_str: str, k: int = 5, additional_filters: Optional[dict] = None) -> List[DocumentSimilaritySeachResult]:
+async def similarity_search(query_str: str, k: int = 5, additional_filters: Optional[dict] = None) -> List[FindRelevantDocumentResult]:
     """
     Based on the query string, find the most simialr embeddings in the Database
     and return the top k most similar embeddings.
@@ -138,8 +138,8 @@ async def similarity_search(query_str: str, k: int = 5, additional_filters: Opti
 
             logger.info(f"Found {len(similar_embeddings)} similar embeddings for query_str: '{query_str}'")
 
-            search_result: List[DocumentSimilaritySeachResult] = [
-                DocumentSimilaritySeachResult(
+            search_result: List[FindRelevantDocumentResult] = [
+                FindRelevantDocumentResult(
                     id=str(embedding.id),
                     source_type=embedding.source_type.value,
                     source_identifier=embedding.source_identifier,
@@ -155,9 +155,9 @@ async def similarity_search(query_str: str, k: int = 5, additional_filters: Opti
             logger.error(f"Error during similarity search database operation: {e}", exc_info=True)
             return []
     
-DocumentSimilaritySearchTool = dspy.Tool(
-    name="DocumentSimilaritySearch",
-    desc="Find the most similar documents based on the provided embedding.",
+FindRelevantDocuments = dspy.Tool(
+    name="FindRelevantDocuments",
+    desc="Find the most similar documents based on the provided query string, this TOOL only use is to find relevant documents to the query string, this help gaining more context which might be relevant to the query.",
     func=similarity_search,
     args={
         "query_str": dspy.InputField(

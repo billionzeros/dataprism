@@ -1,5 +1,5 @@
 import dspy
-from typing import List, Literal, Optional, Union, Any
+from typing import List, Literal, Optional, Union
 from ._schema import FinalResult, ToolActionPlan, DirectAnswerActionPlan, ToolExecutionResult
 
 
