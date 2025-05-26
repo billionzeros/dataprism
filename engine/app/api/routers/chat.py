@@ -3,7 +3,8 @@ from app.utils import APP_LOGGER_NAME
 from fastapi import APIRouter, status, HTTPException
 from ..schema.chat import CreateChatReq, CreateChatResp, TestChatReq, TestChatResp
 from app.services.chat import ChatService
-from app.pipeline.modules.chat import ChatModule
+from app.pipeline.modules.matrix import MatrixModule
+from app.pipeline.tools import DocumentSimilaritySearchTool, QueryEmbeddingGeneratorTool
 
 router = APIRouter()
 
@@ -23,9 +24,14 @@ async def test_chat_service(req: TestChatReq):
 
     chat_service = ChatService.create()
 
-    module = ChatModule(chat_id=chat_service.chat_id, tools = [])
+    tools = [
+        DocumentSimilaritySearchTool,
+        QueryEmbeddingGeneratorTool,
+    ]
 
-    result = module.forward(user_query=req.user_query)
+    module = MatrixModule(session_id=chat_service.chat_id, tools = tools)
+
+    result = await module.aforward(user_query=req.user_query)
 
     logger.info(f"Chat Service Test Result: {result}")
 
