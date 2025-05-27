@@ -388,13 +388,13 @@ class MatrixModule(dspy.Module):
         if not result:
             logger.warning("Synthesis did not return a final result. Returning a default message.")
             result = FinalResult(
-                results=[Paragraph(text="No valid result was synthesized. Please try rephrasing your query.")],
+                results=[Paragraph(type= "paragraph", text="No valid result was synthesized. Please try rephrasing your query.")],
             )
 
         if not isinstance(result, FinalResult):
             logger.error(f"Expected FinalResult, but got {type(result)}. Returning a default message.")
             result = FinalResult(
-                results=[Paragraph(text="An error occurred during synthesis. Please try rephrasing your query.")],
+                results=[Paragraph(type= "paragraph", text="An error occurred during synthesis. Please try rephrasing your query.")],
             )
 
         return dspy.Prediction(

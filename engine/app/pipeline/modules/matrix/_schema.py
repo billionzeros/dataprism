@@ -63,24 +63,34 @@ class ToolExecutionResult(BaseModel):
         description="An optional error message if the tool call failed."
     )
 
+# Result Class
+# This class is used to represent the final result of a query, which can be a paragraph, bullet point, bar graph, line graph, table, or error message.
+
 class Paragraph(BaseModel):
     """
     Paragraph is a structured text block that can be used to represent a paragraph of text.
     It can be used to represent a paragraph of text in a document, a section of a report, or any other structured text block.
     """
-    __type__ = "paragraph"
+    type: Literal['paragraph'] = "paragraph"
+    """
+    The type of the structured text block. This is used to identify the type of the structured text block.
+    It is used to represent a paragraph of text in a document, a section of a report, or any other structured text block.
+    """
     
     text: str = Field(
         ...,
         description="The text of the paragraph."
     )
+    """
+    The text of the paragraph. This is the main content of the paragraph and can be any string.
+    """
 
 class BulletPoint(BaseModel):
     """
     BulletPoint is a structured text block that can be used to represent a bullet point in a list.
     It can be used to represent a bullet point in a document, a section of a report, or any other structured text block.
     """
-    __type__ = "bullet_point"
+    type: Literal['bullet_point'] = "bullet_point"
 
     text: str = Field(
         ...,
@@ -92,7 +102,13 @@ class BarGraph(BaseModel):
     BarGraph is a structured representation of a bar graph.
     It can be used to represent a bar graph in a document, a section of a report, or any other structured text block.
     """
-    __type__ = "bar_graph"
+
+
+    type: Literal['bar_graph'] = "bar_graph"
+    """
+    The type of the structured text block. This is used to identify the type of the structured text block.
+    It is used to represent a paragraph of text in a document, a section of a report, or any other structured text block.
+    """
 
     title: str = Field(
         ...,
@@ -125,7 +141,12 @@ class LineGraph(BaseModel):
     LineGraph is a structured representation of a line graph.
     It can be used to represent a line graph in a document, a section of a report, or any other structured text block.
     """
-    __type__ = "line_graph"
+
+    type: Literal['line_graph'] = "line_graph"
+    """
+    The type of the structured text block. This is used to identify the type of the structured text block.
+    It is used to represent a line graph in a document, a section of a report, or any other structured text block.
+    """
 
     title: str = Field(
         ...,
@@ -157,7 +178,13 @@ class Table(BaseModel):
     Table is a structured representation of a table.
     It can be used to represent a table in a document, a section of a report, or any other structured text block.
     """
-    __type__ = "table"
+
+
+    type: Literal['table'] = "table"
+    """
+    The type of the structured text block. This is used to identify the type of the structured text block.
+    It is used to represent a table in a document, a section of a report, or any other structured text block.
+    """
     
     title: str = Field(
         ...,
@@ -177,7 +204,12 @@ class ErrorMessage(BaseModel):
     ErrorMessage is a structured representation of an error message.
     It can be used to represent an error message in a document, a section of a report, or any other structured text block.
     """
-    __type__ = "error_message"
+
+    type: Literal['error_message'] = "error_message"
+    """
+    The type of the structured text block. This is used to identify the type of the structured text block.
+    It is used to represent an error message in a document, a section of a report, or any other structured text block.
+    """
     
     message: str = Field(
         ...,

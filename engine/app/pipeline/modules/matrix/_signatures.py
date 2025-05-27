@@ -74,6 +74,9 @@ class SynthesizeResponseSignature(dspy.Signature):
     Given the original query, chat history, the final plan, the log of tool actions and their outputs,
     and retrieved information, synthesize a comprehensive final answer for the user.
     If the retrieved information is insufficient, note what's missing.
+
+    Important:
+    - Final Result Follows the format as suggested in your Reasoning.
     """
     # Input fields
     original_user_query = dspy.InputField(desc="The user's original question.")
