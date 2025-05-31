@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  postgres_mcp_server:
+    image: crystaldba/postgres-mcp:latest
+    container_name: postgres_mcp_server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MCP_ACCESS_MODE=restricted # Options: 'restricted' (default) or 'unrestricted'. 'unrestricted' grants full read/write.
+      - MCP_TRANSPORT=jsonrpc
+      - LOG_LEVEL=info

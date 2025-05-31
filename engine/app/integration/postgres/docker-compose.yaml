@@ -1,0 +1,17 @@
+# docker-compose.template.yml
+version: '3.8'
+services:
+  mcp_server:
+    image: ${MCP_IMAGE_NAME:-crystaldba/postgres-mcp:0.3.1} 
+    container_name: ${MCP_UNIQUE_CONTAINER_NAME}
+    restart: unless-stopped
+    ports:
+      - "${MCP_HOST_PORT}:${MCP_CONTAINER_PORT:-8000}"
+    environment:
+      - DATABASE_URI=${DATABASE_URI} 
+    command:
+      - "--transport=${MCP_TRANSPORT:-sse}"
+      - "--access-mode=${MCP_ACCESS_MODE:-restricted}"
+
+    labels:
+      - "runner_uid=${RUNNER_UID_LABEL}"
