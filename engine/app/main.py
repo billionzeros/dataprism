@@ -2,12 +2,13 @@ import logging
 import dspy
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from mlflow.dspy import autolog as mlflow_autolog_dspy
 from app.utils.logging_config import setup_logging, APP_LOGGER_NAME
 from app.api import api
 from app.core.config import settings
 from app.cloud.r2_client import R2Client
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.pipeline import GenerativeModel
 
 # setup logging configuration
 setup_logging() 
@@ -25,10 +26,15 @@ async def lifespan(app: FastAPI):
     logger.info("Application startup initiated.")
     try:
         r2_client = R2Client()
+
         app.state.r2_client = r2_client
 
-        lm = dspy.LM(model="gemini/gemini-2.0-flash", api_key=settings.gemini_api_key, cache=True)
+        lm = dspy.LM(model=GenerativeModel.GEMINI_2_0_FLASH, api_key=settings.gemini_api_key, cache=True)
         # dspy.configure(lm=lm, track_usage=True)
+
+        # Enable MLflow autologging for dspy
+        mlflow_autolog_dspy()
+
         dspy.configure(lm=lm)
 
     except Exception as e:
