@@ -7,7 +7,7 @@ from app.pipeline._schema import FinalResult
 class PlanQuerySignature(dspy.Signature):
     """
     Given the user query, chat history, available tools, and optional feedback from a previous attempt,
-    understand the query, create a step-by-step plan, and identify tool calls.
+    understand the query, create a step-by-step plan, and identify tool calls (ToolActionPlan) or direct answer (DirectAnswerActionPlan)
     Plan actions: 'call_tool(<tool_name>, <tool_input>)' or 'answer_directly(<summary>)'.
     """
     # Input fields
@@ -31,7 +31,7 @@ class ExecutePlanSignature(dspy.Signature):
     return the next_action to be executed, fix the args if needed because its possible that the args of the tool call need depends on the result of the previous tool call.
     if all the tool calls in the plan are executed, return finished=True and the final result of the plan execution, will be considered as the final result of the plan execution.
 
-    If the next function according to plan is answer_directly, it should return the answer_text as the final result of the plan execution.
+    If the next_action according to plan is DirectAnswerActionPlan, it should return that as the next_action
     """
     plan: List[DirectAnswerActionPlan | ToolActionPlan] = dspy.InputField(
         desc="The plan to execute, which is a list of DirectAnswerActionPlan or ToolActionPlan objects. This should be a valid JSON list of ActionPlan objects.",
