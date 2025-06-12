@@ -16,7 +16,11 @@ class AgenticSignature(dspy.Signature):
     You are a helpful assistant. You have access to a suite of tools.
     Your mission is to answer the user's question by reasoning step-by-step.
     """
+    # Input fields
     question = dspy.InputField(desc="The user's question, potentially with chat history for context.")
+
+    # Output fields
+    answer = dspy.OutputField(desc="The final answer to the user's question, derived from the reasoning process.")
 
 
 class ReasoningModule(dspy.Module):
@@ -72,17 +76,16 @@ class ReasoningModule(dspy.Module):
             mlflow.set_tag("module_name", self.__class__.__name__)
 
             try:
-                # Combine history and current query for full context, as suggested by the signature.
-                contextual_query = f"Chat History:\n{self._history}\n\nUser Query: {user_query}"
+                contextual_query = f"Chat History:\n{self._history}\n\nNew User Query: {user_query}"
 
-                # The agent will now follow the more explicit logic from AgenticSignature.
+                # Give the agent the contextual query to start reasoning, and tools to execute.
                 agent_result = await self._agent.acall(question=contextual_query)
                 
-                # The full thought process is available in the dspy history.
+                # Full thought process is available in the dspy history.
                 full_thought_process = dspy.settings.lm.history
                 
                 # The ReAct module, when it stops, places the final answer in the 'answer' attribute.
-                agent_final_answer = agent_result.answer
+                agent_answer = agent_result.answer
 
                 # Create a structured execution log for the synthesizer.
                 execution_log = "\n\n".join([
@@ -102,14 +105,12 @@ class ReasoningModule(dspy.Module):
 
             logger.info("ReAct agent finished. Moving to Synthesis stage.")
             
-            # The agent has produced its own final answer. We now use the synthesizer
-            # to ensure it's in the correct final format (e.g., FinalResult schema).
             synthesis_input = {
                 "original_user_query": user_query,
                 "chat_history": self._history,
                 "plan_reasoning": "The ReAct agent determined the plan and stopping point internally based on its instructions.",
                 "execution_log_and_results": execution_log,
-                "synthesis_guidance_from_reflector": f"Synthesize a final response based on the agent's findings. The agent's raw answer was: '{agent_final_answer}'",
+                "synthesis_guidance_from_reflector": f"Synthesize a final response based on the agent's findings. The agent's raw answer was: '{agent_answer}'",
             }
 
             logger.info(f"Synthesis input keys: {list(synthesis_input.keys())}")
@@ -122,7 +123,7 @@ class ReasoningModule(dspy.Module):
                 
                 if not isinstance(result, FinalResult):
                         logger.error(f"Expected FinalResult, but got {type(result)}. Falling back to agent's raw answer.")
-                        result = FinalResult(results=[Paragraph(type="paragraph", text=str(agent_final_answer))])
+                        result = FinalResult(results=[Paragraph(type="paragraph", text=str(agent_answer))])
 
                 return dspy.Prediction(
                     answer=result.results,

@@ -1,6 +1,6 @@
 import uuid
 from pydantic import BaseModel
-from typing import Any, Dict, Union, List
+from typing import Union, List
 from app.pipeline._schema import Paragraph, BarGraph, BulletPoint, Table, LineGraph
 
 # ===== Chat Create ======
@@ -41,7 +41,6 @@ class TestChatResp(BaseModel):
     user_query: str
     answer: List[Union[Paragraph, BulletPoint, BarGraph, LineGraph, Table]]
     reasoning: str
-    thought_process: Dict[str, Any]
 
     model_config = {
         "from_attributes": True,

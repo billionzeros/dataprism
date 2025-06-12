@@ -69,7 +69,6 @@ def _execute_duckdb_query(storage_key: str, sql_query: str) -> QueryResult:
         if re.search(r'LIMIT\s+\d+', sql_query, re.IGNORECASE):
             final_sql = re.sub(r'LIMIT\s+\d+', f'LIMIT {fetch_limit}', sql_query, flags=re.IGNORECASE)
         else:
-            # If no LIMIT exists, add one
             final_sql = f"{sql_query.rstrip(';')} LIMIT {fetch_limit}"
 
         logger.info(f"Executing modified SQL: {final_sql}")

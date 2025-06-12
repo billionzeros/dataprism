@@ -1,4 +1,6 @@
 import logging
+
+from dspy.primitives.prediction import Prediction
 from app.utils import APP_LOGGER_NAME
 from fastapi import APIRouter, status, HTTPException
 from ..schema.chat import CreateChatReq, CreateChatResp, TestChatReq, TestChatResp
@@ -34,7 +36,7 @@ async def test_reasoning_service(req: TestChatReq):
 
         module = ReasoningModule(session_id=chat_service.chat_id, tools = tools)
 
-        result = await module.aforward(user_query=req.user_query)
+        result: Prediction = await module.aforward(user_query=req.user_query)
 
         logger.info(f"Chat Service Test Result: {result}")
 
@@ -49,10 +51,8 @@ async def test_reasoning_service(req: TestChatReq):
 
         response = TestChatResp(
             chat_id=chat_service.chat_id,
-            user_query=req.user_query,
-            
+            user_query=req.user_query,            
             answer=answer,
-            thought_process=result.thought_process,
             reasoning=result.reasoning,
         )
 
@@ -109,9 +109,7 @@ async def test_chat_service(req: TestChatReq):
         response = TestChatResp(
             chat_id=chat_service.chat_id,
             user_query=req.user_query,
-            
             answer=answer,
-            thought_process=result.thought_process,
             reasoning=result.reasoning,
         )
 
