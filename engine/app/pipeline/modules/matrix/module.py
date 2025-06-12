@@ -46,23 +46,31 @@ class MatrixModule(dspy.Module):
         """
 
         # sub-modules
-        self._planner = dspy.ChainOfThought(PlanQuerySignature)
+        self._planner = dspy.ChainOfThought(PlanQuerySignature, config=dict(
+            max_output_tokens=1000 # Limit the output tokens to guide for a more concise plan
+        ))
         """
         Responsible for the first interation with the user and plan the next step of answer it the best way possible
         """
 
-        self._execution = dspy.Predict(ExecutePlanSignature)
+        self._execution = dspy.Predict(ExecutePlanSignature, config=dict(
+            max_output_tokens=200 # Limit because we expect the next action to be a single tool call or a direct answer, so it should not be too long
+        ))
         """
         Execution module that handles the execution of the tools based on the actions planned by the planner.
         It is responsible for executing the tools and returning the results.
         """
 
-        self._reflector = dspy.ChainOfThought(ReflectionSignature)
+        self._reflector = dspy.ChainOfThought(ReflectionSignature, config=dict(
+            max_output_tokens=400 # Limit the output tokens to guide for a more concise reflection and decision making
+        ))
         """
         Responsible for the reflection of the last step and decide if we need to replan or not
         """
 
-        self._synthesizer = dspy.ChainOfThought(SynthesizeResponseSignature)
+        self._synthesizer = dspy.ChainOfThought(SynthesizeResponseSignature, config=dict(
+            max_output_tokens=2048 # Generous limit for the final answer synthesis, as it can be a comprehensive response
+        ))
         """
         Responsible for the synthesis of the final answer 
         """
