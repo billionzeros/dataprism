@@ -4,7 +4,8 @@ import inspect
 import dspy
 from typing import List, Any
 from app.utils import APP_LOGGER_NAME
-from ._schema import ToolExecutionResult, ToolActionPlan, DirectAnswerActionPlan, FinalResult, Paragraph
+from ._schema import ToolExecutionResult, ToolActionPlan, DirectAnswerActionPlan
+from app.pipeline._schema import FinalResult, Paragraph
 from ._signatures import PlanQuerySignature, ReflectionSignature, SynthesizeResponseSignature, ExecutePlanSignature
 
 logger = logging.getLogger(APP_LOGGER_NAME)
@@ -208,8 +209,6 @@ class MatrixModule(dspy.Module):
                 result=None,
                 error=str(e)
             )
-        
-    
         
     async def aforward(self, user_query: str, **kwargs):
         accumulated_execution_log_str = ""

@@ -143,13 +143,6 @@ GetParquetFileSchemaTool = dspy.Tool(
         "If an error occurs or no schema is found, it returns a list containing a single dictionary with an 'error' or 'warning' key."
     ),
     func=get_parquet_schema_func,
-    args={
-        "upload_id": dspy.InputField(
-            name="upload_id",
-            desc="The unique ID (UUID string) of the uploaded file for which the schema is required. This ID is typically obtained from a file listing, a previous search operation, or user context.",
-            type=str,
-        ),
-    },
     arg_types={
         "upload_id": str,
     },

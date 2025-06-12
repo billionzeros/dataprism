@@ -1,5 +1,6 @@
 import logging
 import dspy
+import re
 import duckdb
 import asyncio
 import uuid
@@ -13,6 +14,10 @@ from app.core.config import settings
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
+MAX_ROWS_RETURNED = 500
+"""
+Maximum number of rows to return from a query. This is a safeguard to prevent excessive data retrieval.
+"""
 class QueryResult(BaseModel):
     """
     Represents the Result of a query executed on a Parquet file.
@@ -59,6 +64,16 @@ def _execute_duckdb_query(storage_key: str, sql_query: str) -> QueryResult:
     try:
         s3_uri = f"s3://{settings.r2_bucket_name}/{storage_key}"
 
+        fetch_limit = MAX_ROWS_RETURNED + 1
+
+        if re.search(r'LIMIT\s+\d+', sql_query, re.IGNORECASE):
+            final_sql = re.sub(r'LIMIT\s+\d+', f'LIMIT {fetch_limit}', sql_query, flags=re.IGNORECASE)
+        else:
+            # If no LIMIT exists, add one
+            final_sql = f"{sql_query.rstrip(';')} LIMIT {fetch_limit}"
+
+        logger.info(f"Executing modified SQL: {final_sql}")
+
         with DuckDBConn() as duckdb_conn:
             conn = duckdb_conn.conn
 
@@ -67,24 +82,32 @@ def _execute_duckdb_query(storage_key: str, sql_query: str) -> QueryResult:
 
             result = conn.execute(sql_query, (s3_uri,)).fetchall()
 
-            logger.info("Query Executed, Result", result)
+            if len(result) > MAX_ROWS_RETURNED:
+                logger.info(f"Query returned more than {MAX_ROWS_RETURNED} rows. Returning only the first {MAX_ROWS_RETURNED} rows.")
+                raise ValueError(
+                    f"Query returned more than {MAX_ROWS_RETURNED} rows."
+                )
 
             return QueryResult(result=result)
     except duckdb.Error as e:
         logger.error(f"DuckDB error executing query on storage_key {storage_key}: {e}", exc_info=True)
         return QueryResult(error_message=str(e))
     
+    except ValueError as ve:
+        logger.error(f"ValueError while executing query on storage_key {storage_key}: {ve}", exc_info=True)
+        return QueryResult(error_message=str(ve))
+    
     except Exception as e:
         logger.error(f"Error executing DuckDB query on storage_key {storage_key}: {e}", exc_info=True)
         return QueryResult(error_message=str(e))
     
 
-async def dspy_query_parquet_tool_func(upload_id: str, sql_query: str, max_rows_to_return: int = 10):
+async def dspy_query_parquet_tool_func(upload_id: str, sql_query: str):
     """
     DSPy tool function wrapper. Executes DuckDB query in a thread.
     Returns list of rows (as dicts) or a list containing a single error dictionary.
     """
-    logger.info(f"Executing query using upload_id {upload_id} with SQL: {sql_query}")
+    logger.info(f"Executing query using upload_id {upload_id}")
 
     upload_record = await _fetch_upload_record(upload_id)
     if not upload_record:
@@ -123,47 +146,36 @@ QueryParquetFileUsingUploadIdTool = dspy.Tool(
     desc=(
         """
         Executes an SQL query on a specified Parquet file stored in R2 cloud storage using DuckDB.
-        The SQL query MUST include 'read_parquet(?)' where the '?' will be replaced by the file's S3 URI.
-        Example SQL: 'SELECT column1, column2 FROM read_parquet(?) WHERE column1 = ''some_value''.
-        Returns a list of dictionaries, where each dictionary represents a row (keys are column names).
-        If an error occurs, it returns a list containing a single dictionary with an 'error' key and the 'query_attempted'.
+        
+        - High-Level Purpose:
+        This tool executes a DuckDB SQL query against a specified Parquet file to extract data or answer questions about its contents.
 
+        - Critical Rules for Usage (The Guardrails):
+        * **Efficiency:** "You MUST write the most efficient query possible. Do not retrieve unnecessary data. Use specific column names instead of `*`."
+        * **Safety:** "You MUST ALWAYS include a `LIMIT` clause to prevent data overflow. Default to `LIMIT 10` if the user doesn't specify a count."
+        * **Intent:** "Analyze the user's intent. If they ask for categories or unique values, you MUST use aggregation functions like `SELECT DISTINCT` or `GROUP BY`."
+        * **Syntax:** "e.g., 'The SQL query MUST contain `read_parquet(?)` as the table name.'"
 
-        Important: 
-        - The SQL query must use 'read_parquet(?)' to reference the Parquet file.
-        - Make sure you always create the most specific query possible to avoid performance issues and not make queries super expensive.
-        - The LLM should ensure the query is valid DuckDB SQL.
-        - The maximum number of rows to return can be controlled by the 'max_rows_to_return' parameter.
+        Common Scenarios & Examples (Show, Don't Just Tell):
+        - **Scenario 1:** User wants to retrieve specific columns from a Parquet file.
+            - Example Query: `SELECT column1, column2 FROM read_parquet(?) WHERE column1 = 'some_value' LIMIT 10;`
+        - **Scenario 2:** User wants to count the number of unique values in a column.  
+            - Example Query: `SELECT COUNT(DISTINCT column1) FROM read_parquet(?);`
+        - **Scenario 3:** User wants to filter data based on a condition.
+            - Example Query: `SELECT column1, column2 FROM read_parquet(?) WHERE column1 > 100 LIMIT 10;`
+        - **Scenario 4:** User wants to aggregate data.
+            - Example Query: `SELECT column1, COUNT(*) FROM read_parquet(?) GROUP BY column1 LIMIT 10;`
+        - **Scenario 5:** User wants to retrieve the first 5 rows of a Parquet file.
+            - Example Query: `SELECT * FROM read_parquet(?) LIMIT 5;`
         """
     ),
     func=dspy_query_parquet_tool_func,
-    args={
-        "upload_id": dspy.InputField(
-            name="upload_id",
-            desc="The unique identifier of the upload record. This ID is used to locate the Parquet file in R2 storage. Example: '123e4567-e89b-12d3-a456-426614174000'.",
-            type=str,
-        ),
-        "sql_query": dspy.InputField(
-            name="sql_query",
-            desc="The DuckDB SQL query to execute. IMPORTANT: The query MUST use 'read_parquet(?)' to reference the Parquet file. The tool will substitute '?' with the actual S3 URI of the file. Example: 'SELECT COUNT(*) FROM read_parquet(?);' or 'SELECT specific_column FROM read_parquet(?) WHERE other_column > 100 LIMIT 10;'. The LLM should ensure the query is valid DuckDB SQL.",
-            type=str,
-        ),
-        "max_rows_to_return": dspy.InputField(
-            name="max_rows_to_return",
-            desc="The maximum number of data rows to return from the query. Defaults to 10. For optimal performance, the LLM should try to include a LIMIT clause in the 'sql_query' itself if a specific number of rows is desired.",
-            type=int,
-            default=10,
-            min_value=1
-        ),
-    },
     arg_types={
         "upload_id": str,
         "sql_query": str,
-        "max_rows_to_return": int,
     },
     arg_desc={
         "upload_id": "The unique identifier of the upload record. This ID is used to locate the Parquet file in R2 storage. Example: '123e4567-e",
         "sql_query": "DuckDB SQL query using 'read_parquet(?)' (e.g., 'SELECT * FROM read_parquet(?) LIMIT 5;').",
-        "max_rows_to_return": "Maximum rows to fetch (default: 10). Results may be truncated if query yields more."
     }
 )

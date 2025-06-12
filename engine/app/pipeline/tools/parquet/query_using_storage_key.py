@@ -94,25 +94,6 @@ QueryParquetFileUsingStorageKeyTool = dspy.Tool(
         """        
     ),
     func=dspy_query_parquet_tool_func,
-    args={
-        "storage_key": dspy.InputField(
-            name="storage_key",
-            desc="The storage key (path within the R2 bucket) of the Parquet file to query.This key is typically obtained from a previous document search or upload record.",
-            type=str,
-        ),
-        "sql_query": dspy.InputField(
-            name="sql_query",
-            desc="The DuckDB SQL query to execute. IMPORTANT: The query MUST use 'read_parquet(?)' to reference the Parquet file. The tool will substitute '?' with the actual S3 URI of the file. Example: 'SELECT COUNT(*) FROM read_parquet(?);' or 'SELECT specific_column FROM read_parquet(?) WHERE other_column > 100 LIMIT 10;'. The LLM should ensure the query is valid DuckDB SQL.",
-            type=str,
-        ),
-        "max_rows_to_return": dspy.InputField(
-            name="max_rows_to_return",
-            desc="The maximum number of data rows to return from the query. Defaults to 10. For optimal performance, the LLM should try to include a LIMIT clause in the 'sql_query' itself if a specific number of rows is desired.",
-            type=int,
-            default=10,
-            min_value=1
-        ),
-    },
     arg_types={
         "storage_key": str,
         "sql_query": str,

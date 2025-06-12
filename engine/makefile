@@ -6,6 +6,11 @@ PYTHON_FILES = app/
 # Default Target
 all: run
 
+## Run MLflow server, which is for logging DSPy Loggs
+mlflow:
+	@echo ">>> Running MLflow server..."
+	@mlflow server --host 127.0.0.1 --port 3080
+
 install:
 	@echo ">>> Installing dependencies using uv..."
 	@uv pip sync pyproject.toml
@@ -66,4 +71,4 @@ requirements:
 	@echo ">>> Generating requirements.txt..."
 	@uv pip compile pyproject.toml --generate-hashes -o requirements.txt
 
-.PHONY: all install run lint format check clean migrate-up migrate-down migrate-down-all migrate-create-empty migrate-create requirements
+.PHONY: all mlflow install run lint format check clean migrate-up migrate-down migrate-down-all migrate-create-empty migrate-create requirements

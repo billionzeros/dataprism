@@ -2,6 +2,7 @@ import logging
 import dspy
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+import mlflow
 from mlflow.dspy import autolog as mlflow_autolog_dspy
 from app.utils.logging_config import setup_logging, APP_LOGGER_NAME
 from app.api import api
@@ -30,10 +31,13 @@ async def lifespan(app: FastAPI):
         app.state.r2_client = r2_client
 
         lm = dspy.LM(model=GenerativeModel.GEMINI_2_0_FLASH, api_key=settings.gemini_api_key, cache=True)
-        # dspy.configure(lm=lm, track_usage=True)
+        # dspy.configure(lm=lm, track_usage=True,)
 
-        # Enable MLflow autologging for dspy
-        mlflow_autolog_dspy()
+        # Set up MLflow for tracking DSPy Runs
+        mlflow.set_tracking_uri("http://localhost:3080")  
+        mlflow.set_experiment("DSPy")  
+
+        mlflow_autolog_dspy() # Enable Auto Logging
 
         dspy.configure(lm=lm)
 

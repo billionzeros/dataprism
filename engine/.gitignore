@@ -50,3 +50,6 @@ __pycache__/
 
 # idea files
 .idea
+
+mlruns/
+mlartifacts/

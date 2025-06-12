@@ -71,13 +71,6 @@ QueryEmbeddingGeneratorTool = dspy.Tool(
     It returns a list of floats representing the embedding of the query.
     """,
     func=generate_query_embedding,
-    args={
-        "query": dspy.InputField(
-            name="query",
-            desc="The text query for which to generate an embedding.",
-            type=str,
-        ),
-    },
     arg_types={
         "query": str,
     },

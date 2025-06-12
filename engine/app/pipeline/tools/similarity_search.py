@@ -1,9 +1,10 @@
 import logging
 import dspy
-from pydantic import BaseModel
+from typing import Dict, List
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from app.utils import APP_LOGGER_NAME
-from typing import List, Optional
+from typing import Optional
 from app.db.session import AsyncSessionLocal
 from app.pipeline.utils.embeddings import Embedder
 from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel
@@ -37,6 +38,22 @@ class FindRelevantDocumentResult(BaseModel):
     """
     Original text of the embedding, if available.
     """
+
+class SimilaritySearchInput(BaseModel):
+    """Input schema for the FindRelevantDocuments tool."""
+    query_str: str = Field(
+        ..., 
+        description="The query string to search for similar embeddings. A detailed query string yields better results."
+    )
+    k: int = Field(
+        default=5, 
+        description="The number of similar embeddings to return.",
+        ge=1 # ge=1 ensures the value is greater than or equal to 1
+    )
+    additional_filters: Optional[Dict] = Field(
+        default=None, 
+        description="Optional dictionary of filters to apply to the search."
+    )
 
 async def generate_query_embedding(query: str) -> List[float]:
     """
@@ -174,26 +191,6 @@ FindRelevantDocuments = dspy.Tool(
             - For `BLOCK` it is the `upload_id` of the document or file containing the block.
         """),
     func=similarity_search,
-    args={
-        "query_str": dspy.InputField(
-            name="query_str",
-            desc="The query string to search for similar embeddings. Using a detailed query string results in better results.",
-            type=str,
-        ),
-        "k": dspy.InputField(
-            name="k",
-            desc="The number of similar embeddings to return.",
-            type=int,
-            default=5,
-            min_value=1
-        ),
-        "additional_filters": dspy.InputField(
-            name="additional_filters",
-            desc="Optional filters to apply to the search.",
-            type=Optional[dict],
-            default=None
-        ),
-    },
     arg_types={
         "query_str": str,
         "additional_filters": Optional[dict],

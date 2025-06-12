@@ -2,16 +2,20 @@
 version: '3.8'
 services:
   mcp_server:
-    image: ${MCP_IMAGE_NAME:-crystaldba/postgres-mcp:0.3.1} 
-    container_name: ${MCP_UNIQUE_CONTAINER_NAME}
+    image: ${MCP_IMAGE_NAME} 
+    container_name: ${MCP_CONTAINER_NAME}
     restart: unless-stopped
     ports:
-      - "${MCP_HOST_PORT}:${MCP_CONTAINER_PORT:-8000}"
+      - "${MCP_HOST_PORT}:${MCP_CONTAINER_PORT}"
     environment:
       - DATABASE_URI=${DATABASE_URI} 
     command:
-      - "--transport=${MCP_TRANSPORT:-sse}"
-      - "--access-mode=${MCP_ACCESS_MODE:-restricted}"
+      # tells the service to use Server-Sent Events
+      - "--transport=sse"
+      # --access-mode can be 'restricted' or 'unrestricted'
+      - "--access-mode=${MCP_ACCESS_MODE}"
+      # The port the service inside the container should listen on
+      - "--port=${MCP_CONTAINER_PORT}"
 
     labels:
       - "runner_uid=${RUNNER_UID_LABEL}"

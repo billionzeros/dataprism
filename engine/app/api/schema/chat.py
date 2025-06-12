@@ -1,7 +1,7 @@
 import uuid
 from pydantic import BaseModel
 from typing import Any, Dict, Union, List
-from app.pipeline.modules.matrix._schema import Paragraph, BarGraph, BulletPoint, Table, LineGraph
+from app.pipeline._schema import Paragraph, BarGraph, BulletPoint, Table, LineGraph
 
 # ===== Chat Create ======
 class CreateChatReq(BaseModel):

@@ -1,6 +1,7 @@
 import dspy
 from typing import List, Literal, Optional, Union
-from ._schema import FinalResult, ToolActionPlan, DirectAnswerActionPlan, ToolExecutionResult
+from ._schema import ToolActionPlan, DirectAnswerActionPlan, ToolExecutionResult
+from app.pipeline._schema import FinalResult
 
 
 class PlanQuerySignature(dspy.Signature):
