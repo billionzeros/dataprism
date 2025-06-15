@@ -63,7 +63,7 @@ class MatrixModule(dspy.Module):
         """
 
         self._reflector = dspy.ChainOfThought(ReflectionSignature, config=dict(
-            max_output_tokens=400 # Limit the output tokens to guide for a more concise reflection and decision making
+            max_output_tokens=1000 # Limit the output tokens to guide for a more concise reflection and decision making
         ))
         """
         Responsible for the reflection of the last step and decide if we need to replan or not
@@ -324,6 +324,7 @@ class MatrixModule(dspy.Module):
                         elif isinstance(next_action, DirectAnswerActionPlan):
                             log_entry = f"Action: answer_directly. Content: {next_action.answer_text}"
                             execution_results.append(log_entry)  
+                            # As model suggested direct answer, we can consider the plan execution finished.
                             finished = True             
                         else:
                             logger.error(f"Unknown action type: {next_action}")
