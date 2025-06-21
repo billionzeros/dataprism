@@ -1,14 +1,14 @@
-# Shooting Star 🌠
+<div align="center">
+  <img src=".github/banner.svg" alt="DataPrism Logo" width="500">
+</div>
 
-**Your co-pilot for data exploration and analysis**
-
-Shooting Star is an analytics tool with a reimagined interface that removes the barriers between you and your data. No longer limited by rigid dashboards or predefined queries, Shooting Star empowers you to explore, analyse, and extract value from your data in natural language.
+**Data Prism** is an analytics tool with a reimagined interface that removes the barriers between you and your data. No longer limited by rigid dashboards or predefined queries, DataPrism empowers you to explore, analyse, and extract value from your data in natural language.
 
 ## Vision
 
 Imagine a world where data analysis is as intuitive as having a conversation. Where you can ask questions about your data and get immediate, visual answers think graphs charts. Where you can fork someone else's analysis, build upon it, and share your insights with the world.
 
-That's Shooting Star: **Cursor for Data Analysis**.
+That's DataPrism: **Cursor for Data Analysis**.
 
 ## Inspiration
 
@@ -60,7 +60,7 @@ bun dev
 
 ## Technical Architecture
 
-Shooting Star consists of:
+DataPrism consists of:
 
 1. **Frontend**: React/Next.js application with a modern UI
 2. **Backend**: Go server with powerful data processing capabilities
@@ -105,7 +105,7 @@ See our [Contributing Guide](CONTRIBUTING.md) for more details.
 
 ## Funding
 
-Shooting Star is currently self-funded. We're committed to keeping the core project open source while developing a sustainable business model.
+DataPrism is currently self-funded. We're committed to keeping the core project open source while developing a sustainable business model.
 
 ### Support Us
 
@@ -138,8 +138,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **GitHub**: [@OmGuptaIND](https://github.com/OmGuptaIND)
 - **Twitter**: [@_its_omg](https://x.com/_its_omg)
-- **Email**: omgupta0720@gmail.com
+- **Email**: omg@billionzeros.com
 
 ---
 
-*Shooting Star: Illuminating your data journey.*
+*DataPrism: Illuminating your data journey.*
