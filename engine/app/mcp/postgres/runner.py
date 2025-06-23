@@ -13,7 +13,7 @@ logger = logging.getLogger(APP_LOGGER_NAME)
 
 class PostgresRunner(BaseMcpRunner):
     def __init__(self, config: PostgressRunnerConfig):
-        self._image_name = "crystaldba/postgres-mcp:latest"
+        self._image_name = "crystaldba/postgres-mcp"
         """
         The Docker image name for the Postgres MCP service
         """
@@ -113,7 +113,7 @@ class PostgresRunner(BaseMcpRunner):
 
         env_vars = {
             "MCP_IMAGE_NAME": self._image_name,
-            "MCP_CONTAINER_NAME": "mcp",
+            "MCP_CONTAINER_NAME": self.runner_addr,
             "DATABASE_URI": self._database_uri,
             "MCP_HOST_PORT": str(self.host_port),
             "MCP_CONTAINER_PORT": str(self.mcp_container_port),

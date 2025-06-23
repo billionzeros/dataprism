@@ -60,14 +60,23 @@ async def run_mcp(
 )
 async def list_tools():
     try:
-        async with sse_client("http://localhost:8010/sse") as (read_stream, write_stream):
-            async with ClientSession(read_stream, write_stream) as session:
-                # Initialize the connection
-                await session.initialize()
+        client = sse_client("http://localhost:8010/sse")
 
-                available_tools = await session.list_tools()
+        read_stream, write_stream = await client.__aenter__()
+
+        session = ClientSession(read_stream, write_stream)
+
+        await session.__aenter__()
+
+        await session.initialize()
+
+        available_tools = await session.list_tools()
+
+        await session.__aexit__(None, None, None)
+        await client.__aexit__(None, None, None)
 
         return available_tools
+    
     
     except HTTPException as e:
         logger.error(f"HTTP Exception in run_mcp: {e.detail}")
