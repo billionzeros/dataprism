@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
 from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp, CheckAbleToAccessFileResp
 from app.services.duck_db import DuckDBConn
-from app.pipeline.modules.headerDescription import PredictHeaderDescription, HeaderDescriptionContext
+from app.pipeline.modules.header_description import PredictHeaderDescription, HeaderDescriptionContext
 from app.pipeline.utils.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
