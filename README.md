@@ -47,10 +47,10 @@ I wanted to create a tool that was flexible, powerful, and easy to use. First th
 
 ```bash
 # Clone the repository
-git clone https://github.com/OmGuptaIND/shooting-star.git
+git clone https://github.com/OmGuptaIND/dataprism.git
 
-# Start the server
-cd shooting-star/server
+# Start the engine
+cd dataprism/engine
 make run
 
 # Start the client
@@ -110,7 +110,6 @@ DataPrism is currently self-funded. We're committed to keeping the core project 
 ### Support Us
 
 - **GitHub Sponsors**: [Become a sponsor](https://github.com/sponsors/OmGuptaIND)
-- **Open Collective**: [Contribute to our collective](https://opencollective.com/shooting-star)
 - **Enterprise Partners**: Contact us about early access and custom integration
 
 ## Roadmap
