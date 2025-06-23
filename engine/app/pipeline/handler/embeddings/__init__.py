@@ -1,4 +1,4 @@
-from .module import Embedder, EmbedContentConfig, EmbeddingModel
+from .embedder import Embedder, EmbedContentConfig, EmbeddingModel
 from app.db.models.vector_embedding import EmbeddingSourceType
 
 __all__ = [

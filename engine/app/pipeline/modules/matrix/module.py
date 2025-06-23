@@ -6,7 +6,7 @@ import dspy
 from typing import List, Any
 from app.utils import APP_LOGGER_NAME
 from ._schema import ToolExecutionResult, ToolActionPlan, DirectAnswerActionPlan
-from app.pipeline._schema import FinalResult, Paragraph
+from engine.app.pipeline.modules._schema import FinalResult, Paragraph
 from ._signatures import PlanQuerySignature, ReflectionSignature, SynthesizeResponseSignature, ExecutePlanSignature
 
 logger = logging.getLogger(APP_LOGGER_NAME)

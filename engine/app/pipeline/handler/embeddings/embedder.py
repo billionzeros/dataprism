@@ -21,7 +21,7 @@ class Embedder:
         if config:
             self._embedding_config = config
     
-    def generate_embeddings(self, content: List[str]) :
+    def generate_embeddings(self, content: list[str]) :
         """
         Generate embeddings for the given text using the specified gemini model.
         """
@@ -30,7 +30,7 @@ class Embedder:
 
             response = client.models.embed_content(
                 model = self._model,
-                contents= content,
+                contents= content, # type: ignore
                 config=self._embedding_config,
             )
 
