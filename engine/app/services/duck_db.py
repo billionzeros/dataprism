@@ -1,7 +1,7 @@
 import logging
 import duckdb
 from app.utils import APP_LOGGER_NAME
-from app.core.config import settings
+from engine.app.settings.config import settings
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 

@@ -10,12 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.cloud import R2Client, R2UploadError
 from app.services.upload import csv as csv_service
-from app.core.config import settings
+from engine.app.settings.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
 from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp, CheckAbleToAccessFileResp
 from app.services.duck_db import DuckDBConn
 from app.pipeline.modules.header_description import PredictHeaderDescription, HeaderDescriptionContext
-from app.pipeline.utils.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
+from app.pipeline.handler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 

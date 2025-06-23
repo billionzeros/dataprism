@@ -1,6 +1,6 @@
 import logging
 from google import genai
-from app.core.config import settings
+from engine.app.settings.config import settings
 from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List

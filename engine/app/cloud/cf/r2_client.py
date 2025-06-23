@@ -7,7 +7,7 @@ from botocore.config import Config
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
 from typing import Optional, BinaryIO
 
-from app.core.config import settings
+from engine.app.settings.config import settings
 from app.utils import APP_LOGGER_NAME, SingletonMeta
 
 logger = logging.getLogger(APP_LOGGER_NAME)

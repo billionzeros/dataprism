@@ -3,7 +3,7 @@ import dspy
 import uuid
 from typing import Any, Optional
 from pydantic import BaseModel
-from app.core.config import settings
+from engine.app.settings.config import settings
 from app.services.duck_db import DuckDBConn
 from app.utils import APP_LOGGER_NAME
 from app.db.session import AsyncSessionLocal 
