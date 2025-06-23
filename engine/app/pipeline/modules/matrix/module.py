@@ -235,6 +235,13 @@ class MatrixModule(dspy.Module):
         This is used to provide context for the planner's decisions and actions.
         """
 
+        finished_thinking = False
+        """
+        Flag to indicate if the thinking process is finished.
+        This is used to control the flow of the thinking process and determine when to stop iterating
+        through the planning, execution, and reflection stages.
+        """
+
         # Plans the thoughts after each iteration
         turn_thought_log = {
             "iterations": [],
@@ -270,6 +277,7 @@ class MatrixModule(dspy.Module):
                     iteration_log["planning_error"] = str(e)
                     turn_thought_log["iterations"].append(iteration_log)
                     final_answer = "I encountered an issue while planning how to respond. Please try rephrasing your query."
+                    
                     return dspy.Prediction(final_answer=final_answer, full_thought_process=turn_thought_log)
 
                 logger.debug(f"Current Plan (Iter {i+1}): {current_plan}")
@@ -283,6 +291,9 @@ class MatrixModule(dspy.Module):
                     iteration_log["next_step_decision"] = "ANSWER_WITH_SYNTHESIS"
                     iteration_log["guidance_for_next_step"] = "Synthesize based on planner's direct answer."
                     turn_thought_log["iterations"].append(iteration_log)
+
+                    # If the planner suggests a direct answer, we skip the execution and move to synthesis
+                    finished_thinking = True
                     break
 
                 if current_plan:
@@ -294,13 +305,8 @@ class MatrixModule(dspy.Module):
                         "action_results": execution_results,
                     }
 
-                    finished = False
-                    while not finished:
-                        if len(execution_results) >= self._max_tools_calls:
-                            logger.error(f"Reached maximum tool calls limit ({self._max_tools_calls}). Stopping execution.")
-                            execution_results.append(f"Reached maximum tool calls limit, max_tool_calls = {self._max_tools_calls}")
-                            break
-
+                    # Execute the plan iteratively
+                    while len(execution_results) <= self._max_tools_calls:
                         execution_output = self._execution(**execution_input)
                         next_action = execution_output.next_action
 
@@ -308,7 +314,6 @@ class MatrixModule(dspy.Module):
 
                         if next_action is None:
                             logger.info("All actions in the plan have been executed.")
-                            finished = True
                             break
 
                         if isinstance(next_action, ToolActionPlan):
@@ -318,17 +323,20 @@ class MatrixModule(dspy.Module):
                             if tool_result.error:
                                 logger.error(f"Error Executing tool '{tool_result.tool_name}': {tool_result.error}")
                                 execution_results.append(f"Error executing tool '{tool_result.tool_name}': {tool_result.error}")
-                                finished = True
                                 break
 
                         elif isinstance(next_action, DirectAnswerActionPlan):
                             log_entry = f"Action: answer_directly. Content: {next_action.answer_text}"
                             execution_results.append(log_entry)  
-                            # As model suggested direct answer, we can consider the plan execution finished.
-                            finished = True             
+
+                            # If the next action is to answer directly, we can finalize the thought process
+                            finished_thinking = True
+                            break      
+
                         else:
                             logger.error(f"Unknown action type: {next_action}")
                             execution_results.append(f"Unknown action: {next_action}")
+
                 else:
                     logger.error("Planner generated an empty plan.")
                     execution_results.append("Planner generated an empty plan.")
@@ -342,8 +350,9 @@ class MatrixModule(dspy.Module):
                 iteration_log["execution_log"] = execution_result_str
                 accumulated_execution_log_str += f"\n--- Iteration {i+1} Execution ---\n" + execution_result_str
 
-                if i < self._max_thinking_iterations - 1:
-                    logger.info("Stage 3: Reflection")
+                if not finished_thinking and i < self._max_thinking_iterations - 1:
+                    logger.info("Stage 3: Reflection, assessing the plan and execution results.")
+
                     reflection_input = {
                         "original_user_query": user_query,
                         "chat_history": self._history,

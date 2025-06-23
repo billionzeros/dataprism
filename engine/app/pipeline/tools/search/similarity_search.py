@@ -11,10 +11,10 @@ from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
-class FindRelevantDocumentResult(BaseModel):
+class FindRelevantCSVResult(BaseModel):
     """
-    Represents the result of a document similarity search.
-    Contains the ID and embedding of the most similar document.
+    Represents the result of a CSV similarity search.
+    Contains the ID and embedding of the most similar CSV.
     """
     id: str
     
@@ -24,7 +24,7 @@ class FindRelevantDocumentResult(BaseModel):
     """
     source_identifier: str
     """
-    Source identifier of the embedding, such as a `upload_id` for documents,
+    Source identifier of the embedding, such as a `upload_id` for CSV,
     """
     related_id: Optional[str] = None
     """
@@ -40,7 +40,7 @@ class FindRelevantDocumentResult(BaseModel):
     """
 
 class SimilaritySearchInput(BaseModel):
-    """Input schema for the FindRelevantDocuments tool."""
+    """Input schema for the FindRelevantCSVResult tool."""
     query_str: str = Field(
         ..., 
         description="The query string to search for similar embeddings. A detailed query string yields better results."
@@ -112,7 +112,7 @@ async def generate_query_embedding(query: str) -> List[float]:
 
 
 
-async def similarity_search(query_str: str, k: int = 5, additional_filters: Optional[dict] = None) -> List[FindRelevantDocumentResult]:
+async def similarity_search(query_str: str, k: int = 5, additional_filters: Optional[dict] = None) -> List[FindRelevantCSVResult]:
     """
     Based on the query string, find the most simialr embeddings in the Database
     and return the top k most similar embeddings.
@@ -155,8 +155,8 @@ async def similarity_search(query_str: str, k: int = 5, additional_filters: Opti
 
             logger.info(f"Found {len(similar_embeddings)} similar embeddings for query_str: '{query_str}'")
 
-            search_result: List[FindRelevantDocumentResult] = [
-                FindRelevantDocumentResult(
+            search_result: List[FindRelevantCSVResult] = [
+                FindRelevantCSVResult(
                     id=str(embedding.id),
                     source_type=embedding.source_type.value,
                     source_identifier=embedding.source_identifier,
@@ -172,16 +172,16 @@ async def similarity_search(query_str: str, k: int = 5, additional_filters: Opti
             logger.error(f"Error during similarity search database operation: {e}", exc_info=True)
             return []
     
-FindRelevantDocuments = dspy.Tool(
-    name="FindRelevantDocuments",
+FindRelevantCSV = dspy.Tool(
+    name="FindRelevantCSV",
     desc=(
         """
-            Find the most similar documents based on the provided query string, this TOOL only use is to find relevant documents to the query string, this help gaining more context which might be relevant to the query.
+            Find the most similar CSVs based on the provided query string, this TOOL only use is to find relevant CSVs to the query string, this help gaining more context which might be relevant to the query.
 
-            It return a list of Relevant Documents each containing the following fields:
+            It return a list of Relevant CSVs each containing the following fields:
             - id: The unique identifier of the document, of the table storing different vector_embeddings.
             - source_type: The type of the source, such as 'document', 'block', 'CSV_COLUMN', etc.
-            - source_identifier: The identifier of the source, such as an `upload_id` for documents.
+            - source_identifier: The identifier of the source, such as an `upload_id` for CSVs.
             - column_or_chunk_name: The name of the column or chunk, if applicable.
             - related_id: The related ID of the embedding, if applicable.
 
