@@ -74,9 +74,9 @@ class PostgressRunnerConfig(BaseModel):
     The host port on which the Postgres service will be exposed.
     """
 
-    mcp_container_port: int = Field(default=3456, description="The container port for the Postgres MCP service.")
+    mcp_container_port: int = Field(default=8000, description="The container port for the Postgres MCP service.")
     """
-    The container port for the Postgres MCP service, typically set to 3456, which is the default port for Postgres.
+    The container port for the Postgres MCP service, typically set to 8000, which is the default port for Postgres.
     """
     
     access_mode: Literal["restricted", "unrestricted"] = Field(default="restricted", description="Access mode for the Postgres service.")

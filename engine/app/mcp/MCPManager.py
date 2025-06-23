@@ -82,7 +82,7 @@ class MCPManager:
 
         self._running_mcps.clear()
 
-    async def start_pg_mcp(self, db_endpoint: PostgresEndpoint, project_name: str):
+    async def start_pg_mcp(self, db_endpoint: PostgresEndpoint, project_name: str) -> PostgresRunner:
         """
         Returns a Postgres MCP instance for the given project name.
         Allocates a host port for the project if not already allocated.

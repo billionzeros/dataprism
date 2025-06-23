@@ -4,6 +4,8 @@ from fastapi import APIRouter, status, HTTPException, Depends
 from app.mcp.MCPManager import MCPManager
 from app.api.schema.mcp import RunMCPResp, RunMCPReq
 from app.api import deps
+from mcp.client.sse import sse_client
+from mcp import ClientSession
 
 logger = logging.getLogger("app.api.routers.matrix")
 
@@ -24,17 +26,16 @@ async def run_mcp(
     try:
         session_id = uuid.uuid4()
 
-        response = RunMCPResp(session_id=session_id)
-
         postgres_endpoint = req.postgres_endpoint
 
-        await mcp_manager.start_pg_mcp(
+        runner = await mcp_manager.start_pg_mcp(
             db_endpoint=postgres_endpoint,
             project_name=str(session_id)
         )
 
         response = RunMCPResp(
             session_id=session_id,
+            runner_endpoint=runner.runner_sse_endpoint
         )
 
         return response
@@ -49,3 +50,33 @@ async def run_mcp(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while processing the request."
         )
+    
+
+
+@router.get(
+    "/list-tools",
+    status_code=status.HTTP_200_OK,
+    summary="Run MCP Request",
+)
+async def list_tools():
+    try:
+        async with sse_client("http://localhost:8010/sse") as (read_stream, write_stream):
+            async with ClientSession(read_stream, write_stream) as session:
+                # Initialize the connection
+                await session.initialize()
+
+                available_tools = await session.list_tools()
+
+        return available_tools
+    
+    except HTTPException as e:
+        logger.error(f"HTTP Exception in run_mcp: {e.detail}")
+        raise e
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in run_mcp: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while processing the request."
+        )
+    

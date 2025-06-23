@@ -30,7 +30,7 @@ class PostgresRunner(BaseMcpRunner):
         The Docker Compose command to be used, either `docker-compose` or `docker compose`.
         """
 
-        self._config = config
+        self._config: PostgressRunnerConfig = config
         """
         Configuration for the PostgresRunner, including database URI, host port, and access mode.
         """
@@ -62,6 +62,14 @@ class PostgresRunner(BaseMcpRunner):
         sanitized_uid = "".join(c if c.isalnum() else "_" for c in self.runner_uid)
 
         return f"{sanitized_name}_{sanitized_uid}"
+    
+    @property
+    def runner_sse_endpoint(self):
+        """
+        Returns the SSE endpoint for the Postgres service.
+        This is typically used for streaming updates or notifications from the Postgres service.
+        """
+        return f"http:/127.0.0.1:{self.host_port}/sse"
 
     @property
     def _database_uri(self):
@@ -105,11 +113,12 @@ class PostgresRunner(BaseMcpRunner):
 
         env_vars = {
             "MCP_IMAGE_NAME": self._image_name,
-            "MCP_CONTAINER_NAME": self.runner_addr,
+            "MCP_CONTAINER_NAME": "mcp",
             "DATABASE_URI": self._database_uri,
             "MCP_HOST_PORT": str(self.host_port),
             "MCP_CONTAINER_PORT": str(self.mcp_container_port),
             "MCP_ACCESS_MODE": self.access_mode,
+            "RUNNER_UID_LABEL": "mcp"
         }
 
         self._run_compose_command(["up", "-d", "--remove-orphans", "--force-recreate"], env_vars)

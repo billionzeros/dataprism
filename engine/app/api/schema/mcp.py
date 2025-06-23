@@ -1,6 +1,6 @@
 
 import uuid
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.mcp.postgres._schema import PostgresEndpoint
 
 # ===== Run MCP ======
@@ -13,6 +13,8 @@ class RunMCPReq(BaseModel):
 
 class RunMCPResp(BaseModel):
     session_id: uuid.UUID
+
+    runner_endpoint: str = Field(..., description="The endpoint of the Postgres MCP runner service.",)
 
     model_config = {
         "from_attributes": True,
