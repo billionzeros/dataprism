@@ -1,6 +1,6 @@
 import logging
 from typing import AsyncGenerator
-from app.cloud.r2_client import R2Client
+from engine.app.cloud.cf.r2_client import R2Client
 from fastapi import Request, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
