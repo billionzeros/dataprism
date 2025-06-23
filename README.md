@@ -75,7 +75,7 @@ DataPrism consists of:
 - ✅ Document schema and block-based representation
 - 🚧 Natural language query interface
 - 🚧 Visualization components
-- 🚧 Data connectors for PostgreSQL and CS
+- 🚧 Data connectors for PostgreSQL and CSVs
 - 🚧 PDF and image data extraction
 - 🚧 Core Interface Design
 - 🚧 Ability to Fork Documents.
