@@ -14,8 +14,6 @@ services:
       - "--transport=sse"
       # --access-mode can be 'restricted' or 'unrestricted'
       - "--access-mode=${MCP_ACCESS_MODE}"
-      # The port the service inside the container should listen on
-      - "--port=${MCP_CONTAINER_PORT}"
 
     labels:
       - "runner_uid=${RUNNER_UID_LABEL}"

@@ -12,7 +12,7 @@ class MCPManager:
     """
     Manager different MCP [ Model Context Protocols ] ( postgres, redis, etc. ) and theier connections.
     """
-    def __init__(self, host_port_range_start=8001, host_port_range_end=9000):
+    def __init__(self, host_port_range_start=8010, host_port_range_end=9000):
         self._available_host_ports: List[int] = list(range(host_port_range_start, host_port_range_end + 1))
         """
         Available host ports for MCP services, starting from `host_port_range_start` to `host_port_range_end`.
@@ -51,9 +51,12 @@ class MCPManager:
             return port
         
     def _release_host_port(self, project_name) -> None:
+        """
+        Releases the host port allocated to the given project name.
+        If the project does not have an allocated port, it logs a warning.
+        """
         with self._port_lock:
             if project_name not in self._project_to_port:
-                logging.warning(f"Project {project_name} does not have an allocated port.")
                 return
             
             port = self._project_to_port.pop(project_name)
@@ -62,7 +65,24 @@ class MCPManager:
 
             logging.info(f"Released host port {port} for project {project_name}")
 
-    def start_pg_mcp(self, db_endpoint: PostgresEndpoint, project_name: str) -> PostgresRunner | None:
+    def close(self) -> None:
+        """
+        Close all running MCP instances and release their allocated ports.
+        """
+        for project_name, runner in self._running_mcps.items():
+            try:
+                logging.info(f"Stopping PostgresRunner for project {project_name}")
+                runner.stop()
+                logging.info(f"PostgresRunner stopped for project {project_name}")
+
+            except Exception as e:
+                logging.error(f"Error stopping PostgresRunner for project {project_name}: {e}")
+
+            self._release_host_port(project_name)
+
+        self._running_mcps.clear()
+
+    async def start_pg_mcp(self, db_endpoint: PostgresEndpoint, project_name: str):
         """
         Returns a Postgres MCP instance for the given project name.
         Allocates a host port for the project if not already allocated.
@@ -70,7 +90,7 @@ class MCPManager:
         try:
             port = self._allocate_host_port(project_name)
             if port is None:
-                return None
+                raise PostgresRunnerError("No available host ports to allocate for the project.")
             
             logging.info(f"Creating PostgresRunner for project {project_name} on port {port}")
 
@@ -90,6 +110,8 @@ class MCPManager:
             logging.info(f"PostgresRunner started for project {project_name} on port {port}")
 
             self._running_mcps[project_name] = postgres_runner
+
+            return postgres_runner
 
         except PostgresRunnerError as e:
             logging.error(f"Failed to start PostgresRunner for project {project_name}: {e}")

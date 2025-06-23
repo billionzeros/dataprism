@@ -7,7 +7,7 @@ from typing import Optional, Any
 from app.services.duck_db import DuckDBConn
 
 from app.utils import APP_LOGGER_NAME
-from engine.app.settings.config import settings
+from app.settings.config import settings
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 

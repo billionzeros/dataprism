@@ -6,10 +6,11 @@ import mlflow
 from mlflow.dspy import autolog as mlflow_autolog_dspy
 from app.utils.logging_config import setup_logging, APP_LOGGER_NAME
 from app.api import api
-from engine.app.settings.config import settings
-from engine.app.cloud.cf.r2_client import R2Client
+from app.settings.config import settings
+from app.cloud.cf.r2_client import R2Client
 from fastapi.middleware.cors import CORSMiddleware
 from app.pipeline import GenerativeModel
+from app.mcp import MCPManager
 
 # setup logging configuration
 setup_logging() 
@@ -27,8 +28,10 @@ async def lifespan(app: FastAPI):
     logger.info("Application startup initiated.")
     try:
         r2_client = R2Client()
+        mcp_manager = MCPManager()
 
         app.state.r2_client = r2_client
+        app.state.mcp_manager = mcp_manager
 
         lm = dspy.LM(model=GenerativeModel.GEMINI_2_0_FLASH, api_key=settings.gemini_api_key, cache=True)
         # dspy.configure(lm=lm, track_usage=True,)
@@ -53,6 +56,12 @@ async def lifespan(app: FastAPI):
             app.state.r2_client.close()
         except Exception as e:
             logger.error(f"Error closing R2 client connection: {e}")
+
+    if app.state.mcp_manager:
+        try:
+            app.state.mcp_manager.close()
+        except Exception as e:
+            logger.error(f"Error closing MCP manager connection: {e}")
 
 # Initialize FastAPI app
 app = FastAPI(

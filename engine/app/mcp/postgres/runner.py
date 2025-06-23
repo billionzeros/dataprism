@@ -13,12 +13,12 @@ logger = logging.getLogger(APP_LOGGER_NAME)
 
 class PostgresRunner(BaseMcpRunner):
     def __init__(self, config: PostgressRunnerConfig):
-        self._image_name = "crystaldba/postgres-mcp:0.3.1"
+        self._image_name = "crystaldba/postgres-mcp:latest"
         """
         The Docker image name for the Postgres MCP service
         """
 
-        self._compose_template_file = str(Path(__file__).parent / "docker-compose.template.yml")
+        self._compose_template_file = str(Path(__file__).parent / "docker-compose.yaml")
         """
         Path to the Docker Compose File for the Postgres Service.
         """

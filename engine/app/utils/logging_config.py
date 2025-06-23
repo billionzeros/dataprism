@@ -4,7 +4,7 @@ import sys
 import json
 from typing import Dict, Any
 
-from engine.app.settings.config import settings
+from app.settings.config import settings
 
 APP_LOGGER_NAME = "prism"
 
