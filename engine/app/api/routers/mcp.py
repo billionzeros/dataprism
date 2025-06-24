@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException, Depends
 from app.mcp.MCPManager import MCPManager
 from app.api.schema.mcp import RunMCPResp, RunMCPReq
 from app.api import deps
-from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
 
 logger = logging.getLogger("app.api.routers.matrix")
@@ -60,9 +60,9 @@ async def run_mcp(
 )
 async def list_tools():
     try:
-        client = sse_client("http://localhost:8010/sse")
+        client = streamablehttp_client("http://localhost:8080/mcp/")
 
-        read_stream, write_stream = await client.__aenter__()
+        read_stream, write_stream, _ = await client.__aenter__()
 
         session = ClientSession(read_stream, write_stream)
 

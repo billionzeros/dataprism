@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="development", alias="ENVIRONMENT")
     log_level: str = Field(default="info", alias="LOG_LEVEL")
     host: str = Field(default="127.0.0.1", alias="HOST")
-    port: int = Field(default=8080, alias="PORT")
+    port: int = Field(default=8081, alias="PORT")
     workers: int = Field(default=1, alias="WORKERS", ge=1)
 
     # --- API Credentials ---
