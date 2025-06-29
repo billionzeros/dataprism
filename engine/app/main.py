@@ -11,6 +11,7 @@ from app.cloud.cf.r2_client import R2Client
 from fastapi.middleware.cors import CORSMiddleware
 from app.pipeline import GenerativeModel
 from app.mcp import MCPManager
+from app.workers import ThreadPoolWorkerQueue, MultiProcessWorkerQueue
 
 # setup logging configuration
 setup_logging() 
@@ -29,9 +30,13 @@ async def lifespan(app: FastAPI):
     try:
         r2_client = R2Client()
         mcp_manager = MCPManager()
+        thread_pool_worker = ThreadPoolWorkerQueue(num_workers=settings.thread_pool_worker_count)
+        multi_process_worker = MultiProcessWorkerQueue(num_workers=settings.multi_process_worker_count)
 
         app.state.r2_client = r2_client
         app.state.mcp_manager = mcp_manager
+        app.state.thread_pool_worker = thread_pool_worker
+        app.state.multi_process_worker = multi_process_worker
 
         # Set up MLflow for tracking DSPy Runs
         mlflow.set_tracking_uri("http://localhost:3080")  

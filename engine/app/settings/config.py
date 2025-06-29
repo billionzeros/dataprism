@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     host: str = Field(default="127.0.0.1", alias="HOST")
     port: int = Field(default=8080, alias="PORT")
     workers: int = Field(default=1, alias="WORKERS", ge=1)
+    thread_pool_worker_count: int = Field(default=10, alias="THREAD_POOL_WORKER_COUNT", ge=1) # Number of threads in the pool
+    multi_process_worker_count: int = Field(default=4, alias="MULTI_PROCESS_WORKER_COUNT", ge=1) # Number of processes in the pool
 
     # --- API Credentials ---
     gemini_api_key: str = Field(alias="GEMINI_API_KEY")

@@ -34,7 +34,6 @@ class VectorEmbedding(Base):
 
     __table_args__ = (
         Index('ix_vector_embedding_source', 'source_type', 'source_identifier'),
-        # Index('ix_vector_embedding_related', 'related_id'), # If frequently queried
     )
 
     # Primary key for the vector embedding

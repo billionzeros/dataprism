@@ -3,7 +3,6 @@ import asyncio
 import uuid
 import duckdb
 import logging
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from app.utils import APP_LOGGER_NAME 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +13,7 @@ from app.settings.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
 from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp, CheckAbleToAccessFileResp
 from app.services.duck_db import DuckDBConn
-from app.pipeline.modules.process_csv import ProcessCSV, CSVHeaderDescriptionContext
-from app.pipeline.handler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
+from app.workers import MultiProcessWorkerQueue
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -207,7 +205,7 @@ async def process_csv(
     *,
     upload_id: uuid.UUID,
     db: AsyncSession = Depends(deps.get_db),
-    r2_client: R2Client = Depends(deps.get_r2_client),
+    multiprocess_worker: MultiProcessWorkerQueue = Depends(deps.get_multi_process_worker),
 ):
     """
     Processes a CSV file, using DuckDB retrive the headers of the CSV 
@@ -240,100 +238,9 @@ async def process_csv(
                 detail="Upload does not have a valid storage key.",
             )
         
-        headers: List[str] = []
-        num_sample_rows = 3
-        headers_context: List[CSVHeaderDescriptionContext] = []
-
-        try:
-            with DuckDBConn() as duckdb_conn:
-                s3_uri = f"s3://{settings.r2_bucket_name}/{upload.storage_key}"
-
-                # DuckDB query to describe the CSV file
-                describe_query = "DESCRIBE SELECT * FROM read_parquet(?);"
-
-                conn = duckdb_conn.conn
-
-                if conn is None:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Failed to establish DuckDB connection.",
-                    )
-
-                headers_result = conn.execute(describe_query, parameters=[s3_uri]).fetchall()
-
-                if not headers_result:
-                    logger.error(f"No headers found for upload {upload_id}.")
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="No headers found for the CSV file.",
-                    )
-
-                for row in headers_result:
-                    context = CSVHeaderDescriptionContext(
-                        header_name=row[0],
-                        sample_data=[],
-                    )
-                    headers_context.append(context)
-                    headers.append(row[0])
-
-                logger.info(f"Successfully extracted headers for upload {upload_id}: {headers}")
-
-                if headers:
-                    sample_query = f"SELECT {', '.join(headers)} FROM read_parquet(?) LIMIT ?;"
-                    sample_result = conn.execute(sample_query, parameters=[s3_uri, num_sample_rows]).fetchall()
-
-                    if sample_result:
-                        for row in sample_result:
-                            for i, sample_data in enumerate(row):
-                                context = headers_context[i]
-                                if context is not None:
-                                    context.sample_data.append(sample_data)
-                    else:
-                        logger.warning(f"No sample data found for upload {upload_id}.")
-
-        except duckdb.Error as e:
-            logger.error(f"DuckDB Processing Error: {e}")
-
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to process CSV file with DuckDB.",
-            )
-        
-        except HTTPException:
-            raise
-
-        # Process headers context
-        module = ProcessCSV()
-        
-        output = await module.aforward(
-            headers_count = len(headers),
-            headers_info = headers_context,
-        )
-
-        em = Embedder(config=EmbedContentConfig(
-            task_type="SEMANTIC_SIMILARITY",
-        ))
-
-        ems = em.generate_embeddings(content=[header.model_dump_json() for header in output.headers_info])
-        if not ems:
-            logger.error("Failed to generate embeddings.")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to generate embeddings.",
-            )    
-        
-        await em.store_embeddings(
+        ems = await csv_service.process_csv(
             db=db,
-            ems=[
-                EmbeddingModel(
-                    source_type=EmbeddingSourceType.CSV_COLUMN,
-                    source_identifier=str(upload.id),
-                    column_or_chunk_name=header.header_name,
-                    original_text=header.model_dump_json(),
-                    embedding=embedding.values,
-                )
-                for embedding, header in zip(ems, output.headers_info)
-            ],
+            upload=upload,
         )
 
         response = ProcessUploadResp(
@@ -346,6 +253,7 @@ async def process_csv(
         return response
     except HTTPException as http_exc:
         raise http_exc
+    
     except Exception as e:
         logger.error(f"Error processing CSV file: {e}")
         raise HTTPException(
