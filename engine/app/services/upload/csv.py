@@ -13,7 +13,7 @@ from sqlalchemy import select
 from fastapi import HTTPException, status
 from app.settings.config import settings
 from app.services.duck_db import DuckDBConn
-from app.pipeline.handler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
+from app.pipeline.utils.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
