@@ -33,15 +33,14 @@ async def lifespan(app: FastAPI):
         app.state.r2_client = r2_client
         app.state.mcp_manager = mcp_manager
 
-        lm = dspy.LM(model=GenerativeModel.GEMINI_2_0_FLASH, api_key=settings.gemini_api_key, cache=True)
-        # dspy.configure(lm=lm, track_usage=True,)
-
         # Set up MLflow for tracking DSPy Runs
         mlflow.set_tracking_uri("http://localhost:3080")  
         mlflow.set_experiment("DSPy")  
 
         mlflow_autolog_dspy() # Enable Auto Logging
 
+        lm = dspy.LM(model=GenerativeModel.GEMINI_2_0_FLASH, api_key=settings.gemini_api_key, cache=True)
+        # dspy.configure(lm=lm, track_usage=True,)
         dspy.configure(lm=lm)
 
     except Exception as e:

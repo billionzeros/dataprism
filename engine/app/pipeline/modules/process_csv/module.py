@@ -1,11 +1,32 @@
 import dspy
 import logging
 import json
+import mlflow
 from typing import Dict, List
-from ._schema import HeaderDescriptionContext
+from pydantic import BaseModel, Field
+from ._schema import CSVHeaderDescriptionContext
 from app.utils import APP_LOGGER_NAME
 
 logger = logging.getLogger(APP_LOGGER_NAME)
+
+class HeaderDescriptions(BaseModel):
+    """
+    Represents the description of a header in a CSV file.
+    This Schema is will be used to return the description of a header
+    in the CSV file, in a concise and clear manner.
+    """
+    header_name: str = Field(
+        ...,
+        description="The name of the header in the CSV file, e.g. 'customer_id', 'customer_name', etc."
+    )
+    """
+    Name of the header, e.g. "customer_id", "customer_name", etc, do not change or hallucinate the name of the header
+    """
+
+    description: str
+    """
+    Description of the header, e.g. "The customer_id is a unique identifier for each customer in the database."
+    """
 
 class GenerateHeaderDescription(dspy.Signature):
     """
@@ -34,15 +55,17 @@ class GenerateHeaderDescription(dspy.Signature):
     )
 
     # Output Fields
-    headers_description: str = dspy.OutputField(
-        desc="Stringfied JSON of each headers and their description",
-        format="string",
+    descriptions: list[HeaderDescriptions] = dspy.OutputField(
+        desc="A list of descriptions for each header in the CSV file, each description should be concise and clear.",
+        T=List[HeaderDescriptions],
+        prefix="descriptions:",
     )
 
 
-class PredictHeaderDescription(dspy.Module):
+class ProcessCSV(dspy.Module):
     """
-    This Module is responsible for understanding the header of a document which is required for embedding it.
+    This Module is responsible for understanding the CSV - Which is understanding each of the headers the CSV Store - which is then required for embedding it with some additional context.
+    
     Based on the json provided of the format:
     sample_data = [
     {
@@ -57,6 +80,7 @@ class PredictHeaderDescription(dspy.Module):
 
     The Module will send the data to understand the context of the header and then build a embedding context for
     each header
+
     The context used for embedding will look like:
     context = {
         "header": "customer_id",
@@ -71,43 +95,75 @@ class PredictHeaderDescription(dspy.Module):
     def __init__(self):
         self._predict_description = dspy.Predict(GenerateHeaderDescription)
 
-    def forward(self, headers_count: int, headers_info: List[HeaderDescriptionContext]):
+    async def aforward(self, headers_count: int, headers_info: List[CSVHeaderDescriptionContext]):
         """
         Given the headers and sample data, generate a concise description of what the target column header represents
         in the context of this specific file.
         """
-        prediction = self._predict_description(
-            headers_count=headers_count,
-            headers_info=self._encode_ctx_to_str(headers_info),
-        )
 
-        if prediction.headers_description:
-            try:
-                headers_description = self._decode_dict_from_str(prediction.headers_description)
-                if not isinstance(headers_description, dict):
-                    raise ValueError("Decoded headers_description should be a dictionary")
+        try:
+            logger.info("Starting Header Description Prediction")
+
+            with mlflow.start_run():
+                prediction = await self._predict_description.aforward(
+                    headers_count=headers_count,
+                    headers_info=self._encode_ctx_to_str(headers_info),
+                )
+
+                if not prediction.descriptions:
+                    logger.warning("No header descriptions found in the prediction")
+                    raise ValueError("No header descriptions found in the prediction")
                 
+                if not isinstance(prediction.descriptions, list):
+                    logger.error("Header descriptions should be a list")
+                    raise ValueError("Header descriptions should be a list")
+                
+                if len(prediction.descriptions) != headers_count:
+                    logger.error(f"Expected {headers_count} header descriptions, but got {len(prediction.descriptions)}")
+                    raise ValueError(f"Expected {headers_count} header descriptions, but got {len(prediction.descriptions)}")
+                
+                descriptions: dict[str, HeaderDescriptions] = {}
+                for header_desc in prediction.descriptions:
+                    if not isinstance(header_desc, HeaderDescriptions):
+                        logger.error(f"Header description should be a dictionary, got {type(header_desc)}")
+                        raise ValueError("Header description should be a dictionary")
+                                        
+                    header_name = header_desc.header_name
+                    description = header_desc.description
+
+                    if not header_name or not isinstance(header_name, str):
+                        logger.error(f"Invalid header name: {header_name}")
+                        raise ValueError("Invalid header name in the prediction")
+                    
+                    if not description or not isinstance(description, str):
+                        logger.error(f"Invalid description for header {header_name}: {description}")
+                        raise ValueError(f"Invalid description for header {header_name}")
+                    
+                    descriptions[header_name] = HeaderDescriptions(
+                        header_name=header_name,
+                        description=description
+                    )
+                    
+                        
                 for header in headers_info:
                     header_name = header.header_name
 
-                    predicted_description = headers_description.get(header_name, "No description available")
+                    prediction = descriptions.get(header_name, "No description available")
 
-                    if isinstance(predicted_description, str):
-                        header.description = predicted_description
+                    if isinstance(prediction, HeaderDescriptions):
+                        header.description = prediction.description
                     else:
-                        logger.warning(f"Predicted description for {header_name} is not a string: {predicted_description}")
+                        logger.warning(f"Predicted description for {header_name} not returned by the model, using default value")
                         header.description = "No description available"
 
-            except Exception as e:
-                logger.error(f"Error decoding headers_description: {e}")
-        else:
-            logger.warning("No headers_description found in the prediction")
-
-        return dspy.Prediction(
-            headers_info=headers_info,
-        )
-    
-    def _encode_ctx_to_str(self, data: List[HeaderDescriptionContext]):
+                return dspy.Prediction(
+                    headers_info=headers_info,
+                )
+        except Exception as e:
+            logger.error(f"Error in ProcessCSV Module: {e}")
+            raise e
+            
+    def _encode_ctx_to_str(self, data: List[CSVHeaderDescriptionContext]):
         """
         Encode the type List[HeaderDescriptionContext] into a string format.
         This is used to send the headers_info to the LLM model for processing

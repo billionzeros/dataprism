@@ -14,7 +14,7 @@ from app.settings.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
 from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp, CheckAbleToAccessFileResp
 from app.services.duck_db import DuckDBConn
-from app.pipeline.modules.header_description import PredictHeaderDescription, HeaderDescriptionContext
+from app.pipeline.modules.process_csv import ProcessCSV, CSVHeaderDescriptionContext
 from app.pipeline.handler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
@@ -242,7 +242,7 @@ async def process_csv(
         
         headers: List[str] = []
         num_sample_rows = 3
-        headers_context: List[HeaderDescriptionContext] = []
+        headers_context: List[CSVHeaderDescriptionContext] = []
 
         try:
             with DuckDBConn() as duckdb_conn:
@@ -269,7 +269,7 @@ async def process_csv(
                     )
 
                 for row in headers_result:
-                    context = HeaderDescriptionContext(
+                    context = CSVHeaderDescriptionContext(
                         header_name=row[0],
                         sample_data=[],
                     )
@@ -303,9 +303,9 @@ async def process_csv(
             raise
 
         # Process headers context
-        predict = PredictHeaderDescription()
-
-        output = predict(
+        module = ProcessCSV()
+        
+        output = await module.aforward(
             headers_count = len(headers),
             headers_info = headers_context,
         )
@@ -320,7 +320,7 @@ async def process_csv(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to generate embeddings.",
-            )
+            )    
         
         await em.store_embeddings(
             db=db,
@@ -332,7 +332,7 @@ async def process_csv(
                     original_text=header.model_dump_json(),
                     embedding=embedding.values,
                 )
-                for embedding, header in zip(ems, output)
+                for embedding, header in zip(ems, output.headers_info)
             ],
         )
 
