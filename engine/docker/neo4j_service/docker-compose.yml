@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  neo4j:
+    # Build the custom image from our Dockerfile in the current directory
+    build: .
+    container_name: kg-neo4j
+    hostname: neo4j-prod
+    
+    env_file:
+      - .env
+
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+
+      # Production Memory Configuration
+      # Adjust these based on your server's available RAM.
+      # Example for a server with 16GB RAM:
+      - NEO4J_server_memory_heap_initial__size=4G
+      - NEO4J_server_memory_heap_max__size=4G
+      - NEO4J_server_memory_pagecache_size=8G
+      
+      # Accept the license agreement for Enterprise features enabled by plugins like GDS
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+
+    ports:
+      - "7474:7474" # For the Neo4j Browser (HTTP)
+      - "7687:7687" # For the Bolt driver (Python app connects here)
+
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_backups:/backups
+
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD-SHELL", "wget -O /dev/null http://localhost:7474 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_backups:

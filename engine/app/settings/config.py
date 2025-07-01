@@ -8,6 +8,12 @@ class Settings(BaseSettings):
     # --- Project ---
     project_name: str = Field(default="Shooting Star", alias="PROJECT_NAME")
 
+    # --- Neo4j ---
+    neo4j_uri: str = Field(default="neo4j://localhost:7687", alias="NEO4J_URI")
+    neo4j_username: str = Field(default="neo4j", alias="NEO4J_USERNAME")
+    neo4j_password: str = Field(default="password", alias="NEO4J_PASSWORD")
+    neo4j_encrypted: bool = Field(default=False, alias="NEO4J_ENCRYPTED")
+
     # --- Run Time ---
     environment: str = Field(default="development", alias="ENVIRONMENT")
     log_level: str = Field(default="info", alias="LOG_LEVEL")
