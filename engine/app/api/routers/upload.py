@@ -13,7 +13,7 @@ from app.settings.config import settings
 from app.db.models.upload import UploadType, Upload as UploadModel, ProcessingStatus
 from app.api.schema.upload  import UploadCreateResp, ProcessUploadResp, CheckAbleToAccessFileResp
 from app.services.duck_db import DuckDBConn
-from app.workers import MultiProcessWorkerQueue
+from app.workers import ThreadPoolWorkerQueue
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -205,7 +205,7 @@ async def process_csv(
     *,
     upload_id: uuid.UUID,
     db: AsyncSession = Depends(deps.get_db),
-    multiprocess_worker: MultiProcessWorkerQueue = Depends(deps.get_multi_process_worker),
+    multiprocess_worker: ThreadPoolWorkerQueue = Depends(deps.get_thread_pool_worker),
 ):
     """
     Processes a CSV file, using DuckDB retrive the headers of the CSV 
