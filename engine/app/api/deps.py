@@ -4,6 +4,8 @@ from app.cloud.cf.r2_client import R2Client
 from fastapi import Request, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.mcp import MCPManager
+from app.kg import KnowledgeGraph
+from app.workers import ThreadPoolWorkerQueue
 
 from app.db.session import AsyncSessionLocal
 
@@ -78,7 +80,7 @@ def get_thread_pool_worker(request: Request):
     """
     FastAPI dependency that provides a thread pool worker queue per request.
     """
-    thread_pool_worker: object | None = getattr(request.app.state, "thread_pool_worker", None)
+    thread_pool_worker: ThreadPoolWorkerQueue | None = getattr(request.app.state, "thread_pool_worker", None)
 
     if thread_pool_worker is None or not thread_pool_worker:
         logger.error("Thread pool worker dependency requested, but worker is not available or not initialized.")
@@ -91,18 +93,18 @@ def get_thread_pool_worker(request: Request):
     return thread_pool_worker
 
 
-def get_multi_process_worker(request: Request):
+def get_graph_db(request: Request):
     """
-    FastAPI dependency that provides a multi-process worker queue per request.
+    FastAPI dependency that provides a graph database connection per request.
     """
-    multi_process_worker: object | None = getattr(request.app.state, "multi_process_worker", None)
+    graph_db: KnowledgeGraph | None = getattr(request.app.state, "graph_db", None)
 
-    if multi_process_worker is None or not multi_process_worker:
-        logger.error("Multi-process worker dependency requested, but worker is not available or not initialized.")
+    if graph_db is None or not graph_db:
+        logger.error("Graph DB dependency requested, but DB is not available or not initialized.")
 
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Multi-process worker is not available or not initialized."
+            detail="Graph database is not available or not initialized."
         )
     
-    return multi_process_worker
+    return graph_db

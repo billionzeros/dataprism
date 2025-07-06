@@ -10,9 +10,9 @@ NodeType = Literal[
 ]
 
 
-class GraphEncoderSignature(dspy.Signature):
+class EncoderSignature(dspy.Signature):
     """
-    GraphEncoderSignature is a signature for classifying nodes in a graph database.
+    EncoderSignature is a signature for classifying nodes for a graph database.
     The classification will be used for various purposes, such as data analysis, reporting, or visualization
     in a graph database or data processing pipeline.
     The classification helps in understanding the role of each node in the graph and how it relates to

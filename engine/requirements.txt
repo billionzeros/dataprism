@@ -1308,6 +1308,10 @@ ndjson==0.3.1 \
     --hash=sha256:839c22275e6baa3040077b83c005ac24199b94973309a8a1809be962c753a410 \
     --hash=sha256:bf9746cb6bb1cb53d172cda7f154c07c786d665ff28341e4e689b796b229e5d6
     # via axiom-py
+neo4j==5.28.1 \
+    --hash=sha256:6755ef9e5f4e14b403aef1138fb6315b120631a0075c138b5ddb2a06b87b09fd \
+    --hash=sha256:ae8e37a1d895099062c75bc359b2cce62099baac7be768d0eba7180c1298e214
+    # via engine (pyproject.toml)
 numpy==2.2.5 \
     --hash=sha256:0255732338c4fdd00996c0421884ea8a3651eea555c3a56b84892b66f696eb70 \
     --hash=sha256:02f226baeefa68f7d579e213d0f3493496397d8f1cff5e2b222af274c86a552a \
@@ -1991,7 +1995,9 @@ python-multipart==0.0.20 \
 pytz==2025.2 \
     --hash=sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3 \
     --hash=sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00
-    # via pandas
+    # via
+    #   neo4j
+    #   pandas
 pyyaml==6.0.2 \
     --hash=sha256:01179a4a8559ab5de078078f37e5c1a30d76bb88519906844fd7bdea1b7729ff \
     --hash=sha256:0833f8694549e586547b576dcfaba4a6b55b9e96098b36cdc7ebefe667dfed48 \

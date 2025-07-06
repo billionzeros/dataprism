@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.pipeline import GenerativeModel
 from app.mcp import MCPManager
 from app.workers import ThreadPoolWorkerQueue
+from app.kg.graph_manager import KnowledgeGraph
 
 # setup logging configuration
 setup_logging() 
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     """
     logger.info("Application startup initiated.")
     try:
+        app.state.graph_db = KnowledgeGraph()
         r2_client = R2Client()
         mcp_manager = MCPManager()
         thread_pool_worker = ThreadPoolWorkerQueue(num_workers=settings.thread_pool_worker_count)
@@ -53,13 +55,19 @@ async def lifespan(app: FastAPI):
 
     logger.info("Application shutdown initiated.")
 
-    if app.state.r2_client:
+    if hasattr(app.state, "graph_db"):
+        try:
+            app.state.graph_db.close()
+        except Exception as e:
+            logger.error(f"Error closing Neo4j connection: {e}")
+
+    if hasattr(app.state, "r2_client"):
         try:
             app.state.r2_client.close()
         except Exception as e:
             logger.error(f"Error closing R2 client connection: {e}")
 
-    if app.state.mcp_manager:
+    if hasattr(app.state, "mcp_manager"):
         try:
             app.state.mcp_manager.close()
         except Exception as e:

@@ -10,9 +10,11 @@ class Settings(BaseSettings):
 
     # --- Neo4j ---
     neo4j_uri: str = Field(default="neo4j://localhost:7687", alias="NEO4J_URI")
-    neo4j_username: str = Field(default="neo4j", alias="NEO4J_USERNAME")
+    neo4j_user: str = Field(default="neo4j", alias="NEO4J_USER")
     neo4j_password: str = Field(default="password", alias="NEO4J_PASSWORD")
     neo4j_encrypted: bool = Field(default=False, alias="NEO4J_ENCRYPTED")
+    neo4j_max_connection_lifetime: int = Field(default=3600, alias="NEO4J_MAX_CONNECTION_LIFETIME", ge=1) # Max lifetime of a connection in seconds
+    neo4j_max_connection_pool_size: int = Field(default=50, alias="NEO4J_MAX_CONNECTION_POOL_SIZE", ge=1) # Max number of connections in the pool
 
     # --- Run Time ---
     environment: str = Field(default="development", alias="ENVIRONMENT")
