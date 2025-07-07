@@ -3,7 +3,7 @@ import dspy
 from typing import List
 
 from app.utils import APP_LOGGER_NAME
-from app.pipeline.utils.embeddings import Embedder
+from app.pipeline.handler.embeddings import Embedder
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 

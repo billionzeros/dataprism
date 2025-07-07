@@ -15,6 +15,30 @@ class GenerativeModel(str, Enum):
         return self.value
     
 
+class MLFlowModel(BaseModel):
+    run_id: Optional[str] = Field(
+        ...,
+        description="The ID of the parent run in MLflow, if applicable. This is used to track the lineage of the model."
+    )
+
+    run_name: Optional[str] = Field(
+        default=None,
+        description="The name of the MLflow run associated with this model. This is used to identify the run in MLflow."
+    )
+
+    nested: Optional[bool] = Field(
+        default=False,
+        description="Indicates whether the model is nested within another model. Defaults to False."
+        )
+    
+    def __str__(self):
+        """
+        Returns a string representation of the MLFlowModel.
+        This is used to provide a human-readable representation of the model.
+        """
+        return f"MLFlowModel(parent_run_id={self.run_id}, run_name={self.run_name}, nested={self.nested})"
+
+
 # Result Class
 # This class is used to represent the final result of a query, which can be a paragraph, bullet point, bar graph, line graph, table, or error message.
 

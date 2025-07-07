@@ -7,13 +7,15 @@ from typing import BinaryIO, Optional
 from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.upload import Upload as UploadModel
-from app.pipeline.modules.process_csv import ProcessCSV, CSVHeaderDescriptionContext
+from app.pipeline.modules.process_csv import CSVHeaderDescriptionContext
+from app.pipeline.modules.ingestion import DataIngestionModule
+
 from google.genai.types import ContentEmbedding
 from sqlalchemy import select
 from fastapi import HTTPException, status
 from app.settings.config import settings
 from app.services.duck_db import DuckDBConn
-from app.pipeline.utils.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
+# from app.pipeline.handler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -153,42 +155,22 @@ async def process_csv(
         
         except HTTPException:
             raise
-
-        # Process headers context
-        module = ProcessCSV()
         
+
+        process_id = uuid.uuid4()
+
+        module = DataIngestionModule(session_id=process_id, tools=[])
+
         output = await module.aforward(
-            headers_count = len(headers),
-            headers_info = headers_context,
+            raw_metrics=headers,
+            context={
+                "headers_count": len(headers),
+                "headers_info": [context.model_dump_json() for context in headers_context],
+            }
         )
 
-        em = Embedder(config=EmbedContentConfig(
-            task_type="SEMANTIC_SIMILARITY",
-        ))
 
-        ems = em.generate_embeddings(content=[header.model_dump_json() for header in output.headers_info])
-        if not ems:
-            logger.error("Failed to generate embeddings.")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to generate embeddings.",
-            )    
-        
-        await em.store_embeddings(
-            db=db,
-            ems=[
-                EmbeddingModel(
-                    source_type=EmbeddingSourceType.CSV_COLUMN,
-                    source_identifier=str(upload.id),
-                    column_or_chunk_name=header.header_name,
-                    original_text=header.model_dump_json(),
-                    embedding=embedding.values,
-                )
-                for embedding, header in zip(ems, output.headers_info)
-            ],
-        )
-
-        return ems
+        return []
     
     except HTTPException as http_exc:
         raise http_exc

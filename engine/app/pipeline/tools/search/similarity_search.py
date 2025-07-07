@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.utils import APP_LOGGER_NAME
 from typing import Optional
 from app.db.session import AsyncSessionLocal
-from app.pipeline.utils.embeddings import Embedder
+from app.pipeline.handler.embeddings import Embedder
 from app.db.models.vector_embedding import VectorEmbedding as EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
