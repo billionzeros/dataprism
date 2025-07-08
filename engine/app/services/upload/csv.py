@@ -7,15 +7,15 @@ from typing import BinaryIO, Optional
 from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.upload import Upload as UploadModel
-from app.pipeline.modules.process_csv import CSVHeaderDescriptionContext
-from app.pipeline.modules.ingestion import DataIngestionModule
+from app.pipeline.llm.modules.process_csv import CSVHeaderDescriptionContext
+from app.pipeline.llm.modules.learning import LearningModule
 
 from google.genai.types import ContentEmbedding
 from sqlalchemy import select
 from fastapi import HTTPException, status
 from app.settings.config import settings
 from app.services.duck_db import DuckDBConn
-# from app.pipeline.handler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
+# from app.pipeline.modules.llmhandler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -159,7 +159,7 @@ async def process_csv(
 
         process_id = uuid.uuid4()
 
-        module = DataIngestionModule(session_id=process_id, tools=[])
+        module = LearningModule(session_id=process_id, tools=[])
 
         output = await module.aforward(
             raw_metrics=headers,

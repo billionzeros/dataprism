@@ -4,15 +4,14 @@ import uuid
 import mlflow
 import logging
 from app.utils import APP_LOGGER_NAME
-from app.pipeline.modules._schema import MLFlowModel
+from app.pipeline.llm.modules._schema import MLFlowModel
 from .encoder import MetricEncodingModule
-from .classifier import MetricClassifierModule
-from app.pipeline.modules._schema import MLFlowModel
+
 
 
 logger = logging.getLogger(APP_LOGGER_NAME).getChild("data_ingestion_module")
 
-class DataIngestionModule(dspy.Module):
+class LearningModule(dspy.Module):
     """
     DataIngestion Module is responsible to taking in raw data from various sources and processing them and putting
     them in a strucured format using the Reasoning Capabilities of an LLM onto a Graph Database such as Neo4j
@@ -56,14 +55,6 @@ class DataIngestionModule(dspy.Module):
         that can be used for further analysis or storage in a knowledge base.
         """
 
-        self._classification = MetricClassifierModule(
-            session_id=self.session_id,
-        )
-        """
-        Classifier Module that will be used to classify the metrics, which will help us in getting
-        DERIVED METRICS from the RAW METRICS, which will be used to build a knowledge base.
-        """
-
         logger.info(f"DataIngestionModule initialized with session ID: {self.session_id}")
 
     async def aforward(self, raw_metrics: list[str], context: dict):
@@ -90,13 +81,6 @@ class DataIngestionModule(dspy.Module):
                 raw_metrics=raw_metrics,
                 context=enc_context,
             )
-
-            classification_output: dspy.Prediction = await self._classification.aforward(
-                raw_metrics=raw_metrics,
-                context=enc_context,
-            )
-
-            logger.info("Encoded Metrics: ", classification_output.classifications)
 
             return dspy.Prediction(
                 encodings=enc_output.encodings,

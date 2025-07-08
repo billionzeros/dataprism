@@ -5,7 +5,6 @@ import dspy
 from app.utils import APP_LOGGER_NAME
 from ._signatures import EncoderSignature
 from ._schema import Encoding
-from app.pipeline.modules._schema import MLFlowModel
 
 logger = logging.getLogger(APP_LOGGER_NAME).getChild("data_ingestion_module")
 
