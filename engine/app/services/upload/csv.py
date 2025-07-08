@@ -7,15 +7,14 @@ from typing import BinaryIO, Optional
 from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.upload import Upload as UploadModel
-from app.pipeline.llm.modules.process_csv import CSVHeaderDescriptionContext
-from app.pipeline.llm.modules.learning import LearningModule
+from app.llm.modules.encoder import CSVContext
+from app.llm.modules.learning import LearningModule
 
 from google.genai.types import ContentEmbedding
 from sqlalchemy import select
 from fastapi import HTTPException, status
 from app.settings.config import settings
 from app.services.duck_db import DuckDBConn
-# from app.pipeline.modules.llmhandler.embeddings import Embedder, EmbedContentConfig, EmbeddingSourceType, EmbeddingModel
 
 logger = logging.getLogger(APP_LOGGER_NAME)
 
@@ -95,7 +94,7 @@ async def process_csv(
 
         headers: list[str] = []
         num_sample_rows = 3
-        headers_context: list[CSVHeaderDescriptionContext] = []
+        headers_context: list[CSVContext] = []
         upload_id = upload.id
 
         try:
@@ -123,7 +122,7 @@ async def process_csv(
                     )
 
                 for row in headers_result:
-                    context = CSVHeaderDescriptionContext(
+                    context = CSVContext(
                         header_name=row[0],
                         sample_data=[],
                     )

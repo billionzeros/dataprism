@@ -3,10 +3,10 @@ import uuid
 import dspy
 from fastapi import APIRouter, status, HTTPException
 from app.api.schema.matrix import AskMatrixReq, AskMatrixResp
-from app.pipeline.llm.modules.matrix import MatrixModule
+from app.llm.modules.matrix import MatrixModule
 from mcp.client.sse import sse_client
 from mcp import ClientSession
-from app.pipeline.llm.tools import FindRelevantCSV, GetParquetFileSchemaTool, QueryParquetFileUsingStorageKeyTool, QueryParquetFileUsingUploadIdTool
+from app.llm.tools import FindRelevantCSV, GetParquetFileSchemaTool, QueryParquetFileUsingStorageKeyTool, QueryParquetFileUsingUploadIdTool
 
 logger = logging.getLogger("app.api.routers.matrix")
 

@@ -4,9 +4,8 @@ import uuid
 import mlflow
 import logging
 from app.utils import APP_LOGGER_NAME
-from app.pipeline.llm.modules._schema import MLFlowModel
-from .encoder import MetricEncodingModule
-
+from app.llm.modules._schema import MLFlowModel
+from ..encoder import MetricEncodingModule
 
 
 logger = logging.getLogger(APP_LOGGER_NAME).getChild("data_ingestion_module")
