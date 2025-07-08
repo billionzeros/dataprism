@@ -4,34 +4,31 @@ import uuid
 import mlflow
 import logging
 from app.utils import APP_LOGGER_NAME
-from app.llm.modules import MLFlowModel
-from ..encoder import MetricEncodingModule
+from app.llm.modules.encoder import MetricEncodingModule
 
 
 logger = logging.getLogger(APP_LOGGER_NAME).getChild("data_ingestion_module")
 
-class LearningModule(dspy.Module):
+class LearningPipeline(dspy.Module):
     """
-    DataIngestion Module is responsible to taking in raw data from various sources and processing them and putting
-    them in a strucured format using the Reasoning Capabilities of an LLM onto a Graph Database such as Neo4j
+    LearningPipeline is a module that handles the ingestion of raw metrics data,
+    encodes using LLM and then places the encoded data with there embeddings as Metric Nodes in the Knowledge Graph.
 
-    This Module is responsible for Encoding different type of Metrics to a Specific Encoding Format and then
-    Adding an important Data Classification on each Metric, which will be used to build a knowledge base.
+    Using the closest Embeddings to each other it starts its Learning Process. 
 
-    This module is designed to handle the encoding of Metrics ( Data ) from multiple sources,
-    including databases, files, and APIs. It processes the data and prepares it
-    for further analysis or storage in a knowledge base.
+    Learning Process is a series of steps that involve understanding the data, choosing and creating a plan to analyse the correltion of one encoded metric with another,
+    this helps to identify patterns and trends and store these patterns in the Knowledge Graph for future reference using Analysis Nodes.
+
+    This helps the model to remember the pattern it found during the learning process and when it sees any New Event related to the same metric the Knowledge Graph can be queried to find the most relevant patterns and trends.
+    and this also helps the model to adjust and make new predictions based on the new data it has seen.
     """
 
-    def __init__(self, session_id: uuid.UUID, tools: list[dspy.Tool], parent_mlflow_model: MLFlowModel | None = None, **kwargs):
+    def __init__(self, session_id: uuid.UUID, **kwargs):
         """
         Initializes the DataIngestion Module.
 
         Args:
             session_id (uuid.UUID): Unique identifier for the session.
-            tools (list[dspy.Tool], optional): List of tools to be used in the module.
-            parent_mlflow_model (MLFlowModel | None, optional): Parent MLFlow model associated with this module.
-            **kwargs: Additional keyword arguments.
         """
         super().__init__(**kwargs)
 
@@ -41,12 +38,7 @@ class LearningModule(dspy.Module):
         This is used to track the ingestion process and associate it with a specific session.
         """
 
-        self._parent_mlflow_model = parent_mlflow_model
-        """
-        Parent MLFlow model associated with this module, this is used to track the lineage of the model
-        and associate it with the parent run in MLflow.
-        """
-
+        # LLM Module for encoding Metrics 
         self._encoder = MetricEncodingModule(session_id=self.session_id)
         """
         Encoder Module that will be used to encode the metrics.

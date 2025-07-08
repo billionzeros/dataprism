@@ -1,7 +1,7 @@
 
 import uuid
 from pydantic import BaseModel
-from app.llm.modules._schema import Paragraph, BarGraph, BulletPoint, Table, LineGraph
+from app.llm.modules import Paragraph, BarGraph, BulletPoint, Table, LineGraph
 from typing import Union, List
 
 # ===== Ask Matrix ======

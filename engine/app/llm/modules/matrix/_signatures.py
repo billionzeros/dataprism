@@ -1,7 +1,7 @@
 import dspy
 from typing import List, Literal, Optional, Union
 from ._schema import ToolActionPlan, DirectAnswerActionPlan, ToolExecutionResult
-from app.llm.modules._schema import FinalResult
+from app.llm.modules import FinalResult
 
 
 class PlanQuerySignature(dspy.Signature):
