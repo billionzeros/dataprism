@@ -6,7 +6,7 @@ from app.utils import APP_LOGGER_NAME
 from ._signatures import EncoderSignature
 from ._schema import Encoding
 
-logger = logging.getLogger(APP_LOGGER_NAME).getChild("data_ingestion_module")
+logger = logging.getLogger(APP_LOGGER_NAME).getChild("metric_encoding_module")
 
 
 class MetricEncodingModule(dspy.Module):
@@ -37,7 +37,6 @@ class MetricEncodingModule(dspy.Module):
         self.session_id = session_id
         """
         Unique identifier for the session.
-        This is used to track the ingestion process and associate it with a specific session.
         """
 
         self._encoder = dspy.Predict(
@@ -59,6 +58,8 @@ class MetricEncodingModule(dspy.Module):
         """
         Encodes the provided raw metrics into a structured format using the LLM encoder.
 
+        Signature: EncoderSignature
+
         Args:
             raw_metrics (list[str]): A list of raw metrics to be encoded. Each metric should be a string.
             context (dict): Properties of the node to be classified, such as name, description, and any other relevant attributes.
@@ -72,6 +73,8 @@ class MetricEncodingModule(dspy.Module):
 
         prediction = await self._encoder.aforward(raw_metrics=raw_metrics, context=context)
         
+        logger.info(f"Received Prediction: {prediction}")
+
         # Validate the response to ensure it contains the expected structure and data types
         self._validate_response(raw_metrics, prediction)
 

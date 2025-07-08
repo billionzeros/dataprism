@@ -4,10 +4,12 @@ import uuid
 import mlflow
 import logging
 from app.utils import APP_LOGGER_NAME
-from app.llm.modules.encoder import MetricEncodingModule
+from app.llm.modules.encoder import MetricEncodingModule, Encoding
+from app.llm.embeddings import Embedder
+from app.kg import KnowledgeGraph as KG
+from app.kg._schema import KgMetricsNode
 
-
-logger = logging.getLogger(APP_LOGGER_NAME).getChild("data_ingestion_module")
+logger = logging.getLogger(APP_LOGGER_NAME).getChild("learning_pipeline")
 
 class LearningPipeline(dspy.Module):
     """
@@ -25,7 +27,7 @@ class LearningPipeline(dspy.Module):
 
     def __init__(self, session_id: uuid.UUID, **kwargs):
         """
-        Initializes the DataIngestion Module.
+        Initializes the Learning Pipeline.
 
         Args:
             session_id (uuid.UUID): Unique identifier for the session.
@@ -35,7 +37,19 @@ class LearningPipeline(dspy.Module):
         self.session_id = session_id
         """
         Unique identifier for the session.
-        This is used to track the ingestion process and associate it with a specific session.
+        """
+
+        self._kg = KG()
+        """
+        Knowledge Graph instance that will be used to store the encoded metrics.
+        The Knowledge Graph is a Semantic Learning Graph that stores the relationships between different metrics and their encoded representations.
+        It allows for efficient querying and retrieval of related metrics and their patterns.
+        """
+
+        self._embedder = Embedder()
+        """
+        Embedder instance that will be used to generate embeddings for the encoded metrics.
+        The Embedder is responsible for converting the encoded metrics into vector representations that can be used for
         """
 
         # LLM Module for encoding Metrics 
@@ -46,14 +60,14 @@ class LearningPipeline(dspy.Module):
         that can be used for further analysis or storage in a knowledge base.
         """
 
-        logger.info(f"DataIngestionModule initialized with session ID: {self.session_id}")
+        logger.info(f"LearningPipeline initialized with session ID: {self.session_id}")
 
-    async def aforward(self, raw_metrics: list[str], context: dict):
+    async def start(self, raw_metrics: list[str], context: dict):
         """
-        Encodes the provided raw metrics into a structured format using the LLM encoder and LLM Classification
+        Encodes the provided raw metrics into a structured format for the Learning Pipeline.
         """
 
-        logger.info(f"Starting Data Ingestion for session ID: {self.session_id}")
+        logger.info(f"Starting LearningPipeline with session ID: {self.session_id}")
 
         # Validate the input data
         if not isinstance(raw_metrics, list):
@@ -64,7 +78,7 @@ class LearningPipeline(dspy.Module):
             logger.error("Context should be a dictionary")
             raise ValueError("Context should be a dictionary")
         
-        with mlflow.start_run(run_name=f"Data Ingestion - {self.session_id}"):
+        with mlflow.start_run(run_name=f"LearningPipeline_{self.session_id}"):
             # Forward the raw metrics and context to the encoder module
             enc_context = json.dumps(context)
 
@@ -73,7 +87,47 @@ class LearningPipeline(dspy.Module):
                 context=enc_context,
             )
 
-            return dspy.Prediction(
-                encodings=enc_output.encodings,
-            )
+            logger.info(f"Received Encoded Metrics: {enc_output}")
+
+            if not enc_output or not hasattr(enc_output, 'encodings'):
+                logger.error("Encoder did not return valid output")
+                raise ValueError("Encoder did not return valid output")
+            
+            if not isinstance(enc_output.encodings, list):
+                logger.error("Encoded metrics should be a list")
+                raise ValueError("Encoded metrics should be a list")
+            
+            encodings = enc_output.encodings
+
+            nodes: list[KgMetricsNode] = []
+            
+            ems = self._embedder.generate_embeddings([enc.model_dump_json() for enc in encodings if isinstance(enc, Encoding)])
+            
+            if not ems or not isinstance(ems, list):
+                logger.error("Embedder did not return valid embeddings")
+                raise ValueError("Embedder did not return valid embeddings")
+            
+            for i, enc in enumerate(encodings):
+                if not isinstance(enc, Encoding):
+                    logger.error("Encoded metric is not a valid Encoding")
+                    raise ValueError("Encoded metric is not a valid Encoding")
+                
+                # Create an embedding for each encoding
+                
+                em = ems[i].values
+
+                if em is None or not isinstance(em, list):
+                    logger.error("Embedding values are not valid")
+                    raise ValueError("Embedding values are not valid")
+                
+                nodes.append(KgMetricsNode(
+                    raw_metric=enc.raw_metric,
+                    embedding=em,
+                    source_id=self.session_id.hex,
+                    remarks=None
+                ))
+
+            self._kg.add_metrics_nodes(nodes)
+
+            logger.info(f"LearningPipeline completed successfully with session ID: {self.session_id}")
 

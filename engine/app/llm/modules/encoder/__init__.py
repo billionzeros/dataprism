@@ -3,5 +3,6 @@ from ._schema import Encoding, CSVContext
 
 __all__ = [
     "MetricEncodingModule",
-    "Encoding"
+    "Encoding",
+    "CSVContext",
 ]

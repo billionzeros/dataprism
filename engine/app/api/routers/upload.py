@@ -3,6 +3,7 @@ import asyncio
 import uuid
 import duckdb
 import logging
+import traceback
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from app.utils import APP_LOGGER_NAME 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -255,7 +256,8 @@ async def process_csv(
         raise http_exc
     
     except Exception as e:
-        logger.error(f"Error processing CSV file: {e}")
+        logger.error(f"Error processing CSV file {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while processing the CSV file.",

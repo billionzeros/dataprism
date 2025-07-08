@@ -1,5 +1,5 @@
 from ._schema import MLFlowModel
-from ._schema import Paragraph, FinalResult, BarGraph, BulletPoint, Table, LineGraph
+from ._schema import GenerativeModel, Paragraph, FinalResult, BarGraph, BulletPoint, Table, LineGraph
 
 __all__ = [
     "MLFlowModel",
@@ -8,5 +8,6 @@ __all__ = [
     "BulletPoint",
     "Table",
     "LineGraph",
-    "FinalResult"
+    "FinalResult",
+    "GenerativeModel"
 ]

@@ -4,6 +4,7 @@ from neo4j import GraphDatabase, exceptions
 from app.settings.config import settings
 from app.utils.logging_config import APP_LOGGER_NAME
 from ._error import GraphError
+from ._schema import KgMetricsNode
 
 # Configure a logger for better debugging and monitoring in production
 logger = logging.getLogger(APP_LOGGER_NAME).getChild("kg.graph_manager")
@@ -46,7 +47,9 @@ class KnowledgeGraph:
             )
             self.driver.verify_connectivity()
             logger.info("Successfully connected to Neo4j.")
+
             self._ensure_constraints()
+            self._ensure_indexes() # Ensure indexes are created after connection
         except exceptions.ServiceUnavailable as e:
             logger.error(f"Neo4j connection failed: {e}")
             self.driver = None
@@ -59,32 +62,55 @@ class KnowledgeGraph:
             self.driver = None
             raise
 
-    def _ensure_constraints(self):
-        """Ensures the database has the necessary constraints for data integrity."""
-        if not self.driver:
-            logger.error("Cannot ensure constraints, no valid driver available.")
-            return
-        
-        try:
-            with self.driver.session(database="neo4j") as session:
-                session.run(
-                    """
-                    CREATE CONSTRAINT unique_node_source IF NOT EXISTS
-                    FOR (n:Node) REQUIRE (n.raw_name, n.source_file) IS UNIQUE
-                    """
-                )
-            logger.info("Graph constraints ensured.")
-        except exceptions.ClientError as e:
-            logger.error(f"Failed to ensure constraints: {e}")
-            raise GraphError(f"Failed to ensure constraints in Neo4j: {e}")
-
     def close(self):
         """Closes the Neo4j connection driver if it exists."""
         if self.driver:
             self.driver.close()
             logger.info("Neo4j connection closed.")
             KnowledgeGraph._instance = None
+    
+    def add_metrics_nodes(self, nodes: list[KgMetricsNode]):
+        """
+        Add multiple Metrics Nodes to the Knowledge Graph in bulk.
 
+        Args:
+            nodes (list[KgMetricsNode]): A list of KgMetricsNode instances to be added.
+
+        Returns:
+            list: A list of dictionaries representing the added nodes.
+        
+        Raises:
+            GraphError: If the bulk addition fails or no data is returned.
+        """
+        if not nodes:
+            logger.error("No nodes provided for bulk addition.")
+            raise GraphError("No nodes provided for bulk addition.")
+
+        query = """
+        UNWIND $nodes AS node
+        MERGE (n:Node {raw_metric: node.raw_metric, source_id: node.source_id})
+        ON CREATE SET 
+            n.raw_metric = node.raw_metric,
+            n.source_id = node.source_id,
+            n.embedding = node.embedding,
+            n.remarks = node.remarks,
+            n.created_at = timestamp()
+        RETURN n
+        """
+
+        params = {"nodes": [node.__dict__ for node in nodes]}
+
+        logger.info(f"Adding Bulk Metrics Nodes with params: {params}")
+
+        result = self.query(query, params)
+        if not result:
+            logger.error("Failed to add Bulk Metrics Nodes to the Knowledge Graph.")
+            raise GraphError("Failed to add Bulk Metrics Nodes to the Knowledge Graph.")
+        
+        logger.info(f"Bulk Metrics Nodes added successfully: {result}")
+
+        return result
+    
     def query(self, cypher_query, params=None):
         """
         A general method to run Cypher queries.
@@ -118,3 +144,53 @@ class KnowledgeGraph:
         except Exception as e:
             logger.error(f"An unexpected error occurred while executing the query: {e}")
             raise GraphError(f"An unexpected error occurred while executing the query: {e}")
+
+
+    ######################################################
+    ################### Private methods ##################
+    ######################################################
+
+    def _ensure_indexes(self):
+        """Ensures the necessary vector indexes are created."""
+        if not self.driver:
+            logger.error("Cannot ensure indexes, no valid driver available.")
+            return
+        
+        try:
+            with self.driver.session(database="neo4j") as session:
+                # Assuming nodes are labeled 'Node' and embeddings are stored in 'embedding' property
+                session.run(
+                    """
+                    CREATE VECTOR INDEX `node_embedding_index` IF NOT EXISTS
+                    FOR (n:Node) ON (n.embedding)
+                    OPTIONS {
+                        indexConfig: {
+                            `vector.dimensions`: 768,
+                            `vector.similarity_function`: 'cosine'
+                        }
+                    }
+                    """
+                )
+            logger.info("Vector indexes ensured.")
+        except Exception as e:
+            logger.error(f"Failed to ensure vector indexes: {e}")
+            raise GraphError(f"Failed to ensure vector indexes in Neo4j: {e}")
+
+    def _ensure_constraints(self):
+        """Ensures the database has the necessary constraints for data integrity."""
+        if not self.driver:
+            logger.error("Cannot ensure constraints, no valid driver available.")
+            return
+        
+        try:
+            with self.driver.session(database="neo4j") as session:
+                session.run(
+                    """
+                    CREATE CONSTRAINT unique_node_source IF NOT EXISTS
+                    FOR (n:Node) REQUIRE (n.raw_name, n.source_file) IS UNIQUE
+                    """
+                )
+            logger.info("Graph constraints ensured.")
+        except exceptions.ClientError as e:
+            logger.error(f"Failed to ensure constraints: {e}")
+            raise GraphError(f"Failed to ensure constraints in Neo4j: {e}")

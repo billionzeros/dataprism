@@ -1,5 +1,5 @@
-from .modules._schema import GenerativeModel
+from .learning import LearningPipeline
 
 __all__ = [
-    "GenerativeModel",
+    "LearningPipeline",
 ]

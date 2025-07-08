@@ -3,12 +3,13 @@ import logging
 import uuid
 import duckdb
 import pandas as pd
+import traceback
 from typing import BinaryIO, Optional
 from app.utils import APP_LOGGER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.upload import Upload as UploadModel
-from app.llm.modules.encoder import CSVContext
-from app.llm.modules.learning import LearningModule
+from app.llm.modules.encoder._schema import CSVContext
+from app.pipeline.learning.pipeline import LearningPipeline
 
 from google.genai.types import ContentEmbedding
 from sqlalchemy import select
@@ -158,9 +159,9 @@ async def process_csv(
 
         process_id = uuid.uuid4()
 
-        module = LearningModule(session_id=process_id, tools=[])
+        pipeline = LearningPipeline(session_id=process_id)
 
-        output = await module.aforward(
+        await pipeline.start(
             raw_metrics=headers,
             context={
                 "headers_count": len(headers),
@@ -176,6 +177,7 @@ async def process_csv(
 
     except Exception as e:
         logger.error(f"Error processing CSV file: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while processing the CSV file.",

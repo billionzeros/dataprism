@@ -3,13 +3,12 @@ import dspy
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import mlflow
-from packaging.version import Version
 from app.utils.logging_config import setup_logging, APP_LOGGER_NAME
 from app.api import api
 from app.settings.config import settings
 from app.cloud.cf.r2_client import R2Client
 from fastapi.middleware.cors import CORSMiddleware
-from app.pipeline import GenerativeModel
+from app.llm.modules import GenerativeModel
 from app.mcp import MCPManager
 from app.workers import ThreadPoolWorkerQueue
 from app.kg.graph_manager import KnowledgeGraph
@@ -19,12 +18,6 @@ setup_logging()
 
 # Get the logger instance
 logger = logging.getLogger(APP_LOGGER_NAME) 
-
-assert Version(mlflow.__version__) >= Version("2.18.0"), (
-  "This feature requires MLflow version 2.18.0 or newer. "
-  "Please run '%pip install -U mlflow' in a notebook cell, "
-  "and restart the kernel when the command finishes."
-)
 
 
 # Lifespan event handler, called on startup and shutdown of the application
@@ -50,7 +43,7 @@ async def lifespan(app: FastAPI):
 
         mlflow.dspy.autolog() # type: ignore
 
-        lm = dspy.LM(model=GenerativeModel.GEMINI_2_0_FLASH, api_key=settings.gemini_api_key, cache=True)
+        lm = dspy.LM(model=GenerativeModel.GEMINI_2_0_FLASH, api_key=settings.gemini_api_key, cache=False)
         # dspy.configure(lm=lm, track_usage=True,)
         dspy.configure(lm=lm)
 
