@@ -50,6 +50,9 @@ class KnowledgeGraph:
 
             self._ensure_constraints()
             self._ensure_indexes() # Ensure indexes are created after connection
+
+            # ⚠️ Cleaning the graph after every initialization is not recommended in production.
+            self.clear_graph()  # Clear the graph on initialization, if needed
         except exceptions.ServiceUnavailable as e:
             logger.error(f"Neo4j connection failed: {e}")
             self.driver = None
@@ -145,6 +148,29 @@ class KnowledgeGraph:
             logger.error(f"An unexpected error occurred while executing the query: {e}")
             raise GraphError(f"An unexpected error occurred while executing the query: {e}")
 
+
+    def clear_graph(self):
+        """
+        Clears the entire Knowledge Graph by deleting all nodes and relationships.
+
+        This method is destructive and should be used with caution.
+        """
+        if not self.driver:
+            logger.error("Cannot clear graph, no valid driver available.")
+            return
+        
+        query = "MATCH (n) DETACH DELETE n"
+        
+        try:
+            result = self.query(query)
+
+            nodes_deleted = len(result)
+            logger.info(f"Cleared the graph, {nodes_deleted} nodes deleted.")
+
+            return nodes_deleted
+        except exceptions.ClientError as e:
+            logger.error(f"Failed to clear the graph: {e}")
+            raise GraphError(f"Failed to clear the graph in Neo4j: {e}")
 
     ######################################################
     ################### Private methods ##################

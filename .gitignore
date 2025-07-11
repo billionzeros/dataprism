@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+langwatch
 
 # dependencies
 /node_modules
@@ -7,6 +7,7 @@
 
 # testing
 /coverage
+.coverage
 
 # database
 /prisma/db.sqlite
@@ -46,5 +47,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
+__pycache__/
+
 # idea files
 .idea
+
+mlruns/
+mlartifacts/
