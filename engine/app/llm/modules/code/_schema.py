@@ -1,8 +1,24 @@
 import dspy
 class CodeGenerationSignature(dspy.Signature):
     """
-    Code Generation Signature is reponsible for generating end to end **PYTHON** code snippets based on the
-    input prompts
+    Code Generation Signature is responsible for generating end to end **PYTHON** code snippets based on the
+    input prompts. The output should be clean, executable Python code without any markdown formatting.
+
+    The Code Snippet must be clean, executable Python code. 
+    Do NOT include:
+        - Markdown code block markers (```python or ```)
+        - Any explanatory text before or after the code
+        - Comments explaining what the code does (unless requested)
+    
+    DO include:
+        - Only valid Python syntax that can be executed directly
+        - Proper indentation and formatting
+        - Import statements if needed
+    
+    Example of correct format:
+        import math
+        result = math.sqrt(16)
+        print(result)
     """
     # Input Field
     context: str = dspy.InputField(
@@ -15,7 +31,23 @@ class CodeGenerationSignature(dspy.Signature):
 
     # Output Field
     code: str = dspy.OutputField(
-        desc="The code is the generated code snippet that corresponds to the query"
+        desc="""
+                The Code Snippet must be clean, executable Python code. 
+                Do NOT include:
+                - Markdown code block markers (```python or ```)
+                - Any explanatory text before or after the code
+                - Comments explaining what the code does (unless requested)
+                
+                DO include:
+                - Only valid Python syntax that can be executed directly
+                - Proper indentation and formatting
+                - Import statements if needed
+                
+                Example of correct format:
+                import math
+                result = math.sqrt(16)
+                print(result)
+            """
     )
 
 class CodeValidatorSignature(dspy.Signature):
@@ -37,13 +69,6 @@ class CodeValidatorSignature(dspy.Signature):
     )
 
     # Output Fields
-    is_valid: bool = dspy.OutputField(
-        desc="Indicates whether the generated code is valid or not"
-    )
-    """
-    Indicates whether the generated code is valid or not.
-    """
-
     found_issues: list[str] = dspy.OutputField(
         desc="List of found issues in the generated code, which needs to fixed and worked upon again"
     )
