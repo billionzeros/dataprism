@@ -3,6 +3,9 @@ PYTHON_RUN_SCRIPT = run.py
 VENV_DIR ?= .venv
 PYTHON_FILES = app/
 
+.PHONY: all mlflow install kg-up kg-down run lint format check clean migrate-up migrate-down migrate-down-all migrate-create-empty migrate-create requirements
+
+
 # Default Target
 all: run
 
@@ -79,4 +82,3 @@ requirements:
 	@echo ">>> Generating requirements.txt..."
 	@uv pip compile pyproject.toml --generate-hashes -o requirements.txt
 
-.PHONY: all mlflow install kg-up kg-down run lint format check clean migrate-up migrate-down migrate-down-all migrate-create-empty migrate-create requirements
