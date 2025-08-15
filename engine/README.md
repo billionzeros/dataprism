@@ -59,7 +59,76 @@ This engine leverages cutting-edge technologies including **DSPy**, **Neo4j Know
 - **Python**: >= 3.12
 - **Docker**: For Neo4j database
 - **UV**: Python package manager
+- **MLflow**: For experiment tracking
 - **API Keys**: Gemini API key for LLM operations
+
+### System Setup
+
+Before installing the project dependencies, you need to set up the required tools:
+
+#### 1. Install UV (Python Package Manager)
+
+Follow the official UV installation guide: [https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/)
+
+**Verify installation:**
+```bash
+uv --version
+```
+
+#### 2. Install MLflow
+
+Follow the official MLflow installation guide: [https://mlflow.org/docs/latest/getting-started/intro-quickstart/index.html](https://mlflow.org/docs/latest/getting-started/intro-quickstart/index.html)
+
+**Quick install:**
+```bash
+pip install mlflow
+# or
+uv tool install mlflow
+```
+
+**Verify installation:**
+```bash
+mlflow --version
+```
+
+#### 3. Install Docker
+
+Follow the official Docker installation guide for your operating system:
+- **macOS**: Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop)
+- **Linux**: Use your package manager or follow [Docker's Linux installation guide](https://docs.docker.com/engine/install/)
+- **Windows**: Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop)
+
+**Verify installation:**
+```bash
+docker --version
+docker-compose --version
+```
+
+#### 4. Create Virtual Environment (Optional but Recommended)
+
+While UV manages environments automatically, you can also create a traditional virtual environment:
+
+**Using UV (Recommended):**
+```bash
+# UV automatically manages virtual environments
+# No manual setup required - UV handles this when you run commands
+```
+
+**Using Python venv (Alternative):**
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+
+# On Windows:
+.venv\Scripts\activate
+
+# Deactivate when done
+deactivate
+```
 
 ### Installation
 
@@ -72,6 +141,23 @@ This engine leverages cutting-edge technologies including **DSPy**, **Neo4j Know
 2. **Install dependencies**
    ```bash
    make install
+   ```
+   
+   **Note:** UV automatically creates and manages a virtual environment for this project. The `make install` command uses `uv pip sync pyproject.toml` which:
+   - Creates a virtual environment if one doesn't exist
+   - Installs all dependencies specified in `pyproject.toml`
+   - Ensures reproducible dependency resolution
+
+   **Alternative manual UV commands:**
+   ```bash
+   # Create virtual environment explicitly
+   uv venv
+   
+   # Install dependencies manually
+   uv pip install -e .
+   
+   # Or sync from pyproject.toml
+   uv pip sync pyproject.toml
    ```
 
 3. **Set up environment variables**
