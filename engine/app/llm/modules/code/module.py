@@ -111,10 +111,10 @@ class CodeGenerationModule(dspy.Module):
                     with dspy.PythonInterpreter() as introp:    
                         try:
                             logger.info
-                            execution_code = self.clean_code_output(output.code)
-                            logger.info(f"Executing generated code {execution_code}")
+                            # execution_code = self.clean_code_output(output.code)
+                            # logger.info(f"Executing generated code {execution_code}")
                             # Execute the actual generated code
-                            output = introp.execute(execution_code)
+                            output = introp.execute(output.code)
                             logger.info(f"Code execution successful for session {self.session_id}, {output}")
                         except Exception as e:
                             execution_error = f"Execution error: {str(e)}"

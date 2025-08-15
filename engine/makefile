@@ -14,10 +14,12 @@ mlflow:
 	@echo ">>> Running MLflow server..."
 	@mlflow server --host 127.0.0.1 --port 3080
 
+# Deploy Neo4j Database inside docker
 kg-up:
 	@echo ">>> Starting Neo4j service..."
 	@docker-compose -f docker/neo4j_service/docker-compose.yml up -d
 
+# Stop Neo4j Database inside docker
 kg-down:
 	@echo ">>> Stopping Neo4j service..."
 	@docker-compose -f docker/neo4j_service/docker-compose.yml down
