@@ -134,8 +134,8 @@ deactivate
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd shooting-star/engine
+   git clone https://github.com/billionzeros/dataprism.git
+   cd dataprism/engine
    ```
 
 2. **Install dependencies**
